@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --canvas: #f4f3ef;
+  --canvas: #f7f6f3;
   --surface: #ffffff;
-  --surface-soft: #f8f8f5;
-  --ink: #151619;
-  --ink-muted: #6f7279;
-  --line: #dedfda;
-  --nav: #1e2024;
-  --red: #ed1b2f;
-  --green: #20a65a;
-  --blue: #3578db;
-  --amber: #eca51a;
-  --risk: #e6404c;
-  --radius-card: 1.125rem;
-  --radius-control: 0.75rem;
-  --shadow-card: 0 16px 40px rgba(24, 28, 36, 0.06);
-  --shadow-nav: 0 18px 50px rgba(18, 20, 24, 0.18);
+  --surface-soft: #f5f4f1;
+  --ink: #202124;
+  --ink-muted: #68635f;
+  --line: #e8e6e2;
+  --nav: #252629;
+  --red: #7f1734;
+  --green: #4e514f;
+  --blue: #777a78;
+  --amber: #6f6258;
+  --risk: #7f1734;
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+  --shadow-card: none;
+  --shadow-nav: 0 8px 24px rgba(30, 28, 26, 0.05);
 }
 
 * {
@@ -32,10 +32,9 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 15% 0%, rgba(237, 27, 47, 0.045), transparent 24rem),
-    var(--canvas);
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--canvas);
+  font-family:
+    "Avenir Next", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   text-rendering: optimizeLegibility;
 }
 
@@ -62,24 +61,24 @@ select {
 .surface-card {
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  background: color-mix(in srgb, var(--surface), transparent 1%);
+  background: var(--surface);
   box-shadow: var(--shadow-card);
 }
 
 .eyebrow {
   margin: 0 0 0.35rem;
-  color: var(--red);
+  color: var(--ink-muted);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .module-title {
   margin: 0;
-  font-size: clamp(1.25rem, 2vw, 1.65rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
+  font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,6 +1,8 @@
 export type Confidence = "low" | "medium" | "high";
-export type MetricKey = "attackingOutput" | "possessionControl" | "defensiveDisruption";
-export type PlayerPosition = "GK" | "CB" | "FB/WB" | "DM" | "CM" | "AM" | "W" | "ST";
+export type MetricKey =
+  "attackingOutput" | "possessionControl" | "defensiveDisruption";
+export type PlayerPosition =
+  "GK" | "CB" | "FB/WB" | "DM" | "CM" | "AM" | "W" | "ST";
 
 export interface TeamSeason {
   id: string;
@@ -61,7 +63,11 @@ export interface TeamLandscapePoint {
   y: number;
   z: number;
   raw: Record<MetricKey, number>;
-  cluster: "Territorial controller" | "Direct transition" | "Defensive disruptor" | "Compact pragmatist";
+  cluster:
+    | "Territorial controller"
+    | "Direct transition"
+    | "Defensive disruptor"
+    | "Compact pragmatist";
   coverage: number;
 }
 

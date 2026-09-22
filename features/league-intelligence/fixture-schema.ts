@@ -1,7 +1,16 @@
 import { z } from "zod";
 
 const nullableScore = z.number().min(0).max(100).nullable();
-const positionSchema = z.enum(["GK", "CB", "FB/WB", "DM", "CM", "AM", "W", "ST"]);
+const positionSchema = z.enum([
+  "GK",
+  "CB",
+  "FB/WB",
+  "DM",
+  "CM",
+  "AM",
+  "W",
+  "ST",
+]);
 
 const teamSchema = z.object({
   id: z.string().min(1),
@@ -38,7 +47,12 @@ export const leagueDatasetSchema = z
   .object({
     competition: z.literal("J1"),
     season: z.literal(2025),
-    snapshotDate: z.string().refine((value) => !Number.isNaN(Date.parse(value)), "Invalid snapshot date"),
+    snapshotDate: z
+      .string()
+      .refine(
+        (value) => !Number.isNaN(Date.parse(value)),
+        "Invalid snapshot date",
+      ),
     methodologyVersion: z.string().min(1),
     sample: z.literal(true),
     teams: z.array(teamSchema).min(4),
@@ -48,15 +62,27 @@ export const leagueDatasetSchema = z
     const teamIds = dataset.teams.map((team) => team.id);
     const playerIds = dataset.players.map((player) => player.id);
     if (new Set(teamIds).size !== teamIds.length) {
-      context.addIssue({ code: "custom", path: ["teams"], message: "Team ids must be unique" });
+      context.addIssue({
+        code: "custom",
+        path: ["teams"],
+        message: "Team ids must be unique",
+      });
     }
     if (new Set(playerIds).size !== playerIds.length) {
-      context.addIssue({ code: "custom", path: ["players"], message: "Player ids must be unique" });
+      context.addIssue({
+        code: "custom",
+        path: ["players"],
+        message: "Player ids must be unique",
+      });
     }
     const validTeams = new Set(teamIds);
     dataset.players.forEach((player, index) => {
       if (!validTeams.has(player.teamId)) {
-        context.addIssue({ code: "custom", path: ["players", index, "teamId"], message: "Player team must exist" });
+        context.addIssue({
+          code: "custom",
+          path: ["players", index, "teamId"],
+          message: "Player team must exist",
+        });
       }
     });
   });

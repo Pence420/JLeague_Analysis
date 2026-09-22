@@ -3,5 +3,75 @@ import type { AnalystFinding } from "@/features/league-intelligence/types";
 import { ConfidenceBadge } from "@/components/ui/confidence-badge";
 
 export function AnalystBrief({ findings }: { findings: AnalystFinding[] }) {
-  return <section className="surface-card overflow-hidden" aria-labelledby="analyst-brief-title"><div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-5 sm:px-7"><div><p className="eyebrow">Evidence-led readout</p><h2 id="analyst-brief-title" className="module-title">Analyst Brief</h2></div><span className="flex items-center gap-2 text-xs font-bold text-[var(--ink-muted)]"><Target size={15} /> Exactly three prioritized findings</span></div><div>{findings.map((finding) => <article key={finding.id} className="grid gap-5 border-b border-[var(--line)] px-5 py-6 last:border-0 sm:px-7 lg:grid-cols-[72px_1.15fr_1fr_1fr]"><div className="grid size-14 place-items-center rounded-2xl bg-red-50 text-2xl font-black text-[var(--red)]">{finding.rank}</div><div><h3 className="text-lg font-bold leading-snug">{finding.title}</h3><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">{finding.observation}</p></div><div><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--ink-muted)]">Evidence</p><div className="mt-3 flex gap-5">{finding.evidence.map((metric) => <div key={metric.label}><strong className="block text-2xl tabular-nums">{metric.value}</strong><span className="text-xs text-[var(--ink-muted)]">{metric.label}</span></div>)}</div></div><div><p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--amber)]"><CircleAlert size={14} /> Interpretation</p><p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">{finding.interpretation}</p><div className="mt-3 flex flex-wrap items-center gap-2"><ConfidenceBadge confidence={finding.confidence} /><span className="text-xs">{finding.coverage}% coverage</span></div><p className="mt-2 text-xs text-[var(--ink-muted)]"><ArrowUpRight className="mr-1 inline" size={12} />{finding.limitation}</p></div></article>)}</div></section>;
+  return (
+    <section
+      className="surface-card overflow-hidden"
+      aria-labelledby="analyst-brief-title"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-5 sm:px-7">
+        <div>
+          <p className="eyebrow">Evidence-led readout</p>
+          <h2 id="analyst-brief-title" className="module-title">
+            Analyst Brief
+          </h2>
+        </div>
+        <span className="flex items-center gap-2 text-xs font-bold text-[var(--ink-muted)]">
+          <Target size={15} /> Exactly three prioritized findings
+        </span>
+      </div>
+      <div>
+        {findings.map((finding) => (
+          <article
+            key={finding.id}
+            className="grid gap-5 border-b border-[var(--line)] px-5 py-6 last:border-0 sm:px-7 lg:grid-cols-[72px_1.15fr_1fr_1fr]"
+          >
+            <div className="grid size-14 place-items-center rounded-2xl bg-red-50 text-2xl font-black text-[var(--red)]">
+              {finding.rank}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold leading-snug">
+                {finding.title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
+                {finding.observation}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                Evidence
+              </p>
+              <div className="mt-3 flex gap-5">
+                {finding.evidence.map((metric) => (
+                  <div key={metric.label}>
+                    <strong className="block text-2xl tabular-nums">
+                      {metric.value}
+                    </strong>
+                    <span className="text-xs text-[var(--ink-muted)]">
+                      {metric.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--amber)]">
+                <CircleAlert size={14} /> Interpretation
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
+                {finding.interpretation}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <ConfidenceBadge confidence={finding.confidence} />
+                <span className="text-xs">{finding.coverage}% coverage</span>
+              </div>
+              <p className="mt-2 text-xs text-[var(--ink-muted)]">
+                <ArrowUpRight className="mr-1 inline" size={12} />
+                {finding.limitation}
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }

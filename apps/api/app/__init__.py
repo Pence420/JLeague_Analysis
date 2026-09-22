@@ -1,0 +1,1 @@
+"""J-Scout API package."""

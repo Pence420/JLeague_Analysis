@@ -28,15 +28,27 @@ describe("league analytics", () => {
   });
 
   it("excludes low-minute and low-coverage players from default recruitment signals", () => {
-    const signals = buildRecruitmentSignals(sampleLeagueDataset, { minimumMinutes: 900 });
+    const signals = buildRecruitmentSignals(sampleLeagueDataset, {
+      minimumMinutes: 900,
+    });
     expect(signals.every((item) => item.minutes >= 900)).toBe(true);
     expect(signals.every((item) => item.coverage >= 60)).toBe(true);
   });
 
   it("keeps a partial team in league state but excludes it from a landscape requiring its missing axis", () => {
-    const missingTeam = sampleLeagueDataset.teams.find((team) => team.expectedGoals === null);
+    const missingTeam = sampleLeagueDataset.teams.find(
+      (team) => team.expectedGoals === null,
+    );
     expect(missingTeam).toBeDefined();
-    expect(buildLeagueState(sampleLeagueDataset).some((row) => row.teamId === missingTeam?.id)).toBe(true);
-    expect(buildTeamLandscape(sampleLeagueDataset, DEFAULT_AXES).some((point) => point.teamId === missingTeam?.id)).toBe(false);
+    expect(
+      buildLeagueState(sampleLeagueDataset).some(
+        (row) => row.teamId === missingTeam?.id,
+      ),
+    ).toBe(true);
+    expect(
+      buildTeamLandscape(sampleLeagueDataset, DEFAULT_AXES).some(
+        (point) => point.teamId === missingTeam?.id,
+      ),
+    ).toBe(false);
   });
 });

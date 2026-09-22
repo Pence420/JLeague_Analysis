@@ -12,13 +12,20 @@ import type {
   TeamSeason,
 } from "./types";
 
-export const DEFAULT_AXES = ["attackingOutput", "possessionControl", "defensiveDisruption"] as const;
+export const DEFAULT_AXES = [
+  "attackingOutput",
+  "possessionControl",
+  "defensiveDisruption",
+] as const;
 
 export function per90(value: number | null, minutes: number): number | null {
   return value === null || minutes <= 0 ? null : (value / minutes) * 90;
 }
 
-export function formatMetric(value: number | null, format: "integer" | "decimal" | "percent"): string {
+export function formatMetric(
+  value: number | null,
+  format: "integer" | "decimal" | "percent",
+): string {
   if (value === null || Number.isNaN(value)) return "Not available";
   if (format === "integer") return Math.round(value).toLocaleString("en-US");
   if (format === "percent") return `${Math.round(value)}%`;
@@ -32,7 +39,10 @@ export function confidenceFromCoverage(coverage: number): Confidence {
 }
 
 function teamMetric(team: TeamSeason, key: MetricKey): number | null {
-  if (key === "attackingOutput") return team.expectedGoals === null ? null : team.expectedGoals / team.played;
+  if (key === "attackingOutput")
+    return team.expectedGoals === null
+      ? null
+      : team.expectedGoals / team.played;
   if (key === "possessionControl") return team.possessionPct;
   return team.defensiveActionsPer90;
 }
@@ -57,18 +67,29 @@ export function buildLeagueState(dataset: LeagueDataset): LeagueStateRow[] {
           : (team.expectedGoals - team.expectedGoalsAgainst) / team.played,
       coverage: team.coverage,
     }))
-    .sort((a, b) => b.pointsPerMatch - a.pointsPerMatch || a.teamId.localeCompare(b.teamId));
+    .sort(
+      (a, b) =>
+        b.pointsPerMatch - a.pointsPerMatch || a.teamId.localeCompare(b.teamId),
+    );
 }
 
 export function buildTeamLandscape(
   dataset: LeagueDataset,
   axes: readonly [MetricKey, MetricKey, MetricKey],
 ): TeamLandscapePoint[] {
-  const complete = dataset.teams.filter((team) => axes.every((axis) => teamMetric(team, axis) !== null));
-  const valuesByAxis = axes.map((axis) => complete.map((team) => teamMetric(team, axis) as number));
+  const complete = dataset.teams.filter((team) =>
+    axes.every((axis) => teamMetric(team, axis) !== null),
+  );
+  const valuesByAxis = axes.map((axis) =>
+    complete.map((team) => teamMetric(team, axis) as number),
+  );
   return complete.map((team) => {
-    const raw = Object.fromEntries(DEFAULT_AXES.map((key) => [key, teamMetric(team, key) ?? 0])) as Record<MetricKey, number>;
-    const [xValue, yValue, zValue] = axes.map((axis) => teamMetric(team, axis) as number);
+    const raw = Object.fromEntries(
+      DEFAULT_AXES.map((key) => [key, teamMetric(team, key) ?? 0]),
+    ) as Record<MetricKey, number>;
+    const [xValue, yValue, zValue] = axes.map(
+      (axis) => teamMetric(team, axis) as number,
+    );
     const cluster =
       raw.possessionControl >= 53 && raw.attackingOutput >= 1.25
         ? "Territorial controller"
@@ -91,10 +112,15 @@ export function buildTeamLandscape(
   });
 }
 
-export function buildPerformanceProcess(dataset: LeagueDataset): EvidenceItem[] {
+export function buildPerformanceProcess(
+  dataset: LeagueDataset,
+): EvidenceItem[] {
   return dataset.teams
     .filter((team) => team.expectedGoals !== null)
-    .map((team) => ({ team, gap: (team.goalsFor - (team.expectedGoals as number)) / team.played }))
+    .map((team) => ({
+      team,
+      gap: (team.goalsFor - (team.expectedGoals as number)) / team.played,
+    }))
     .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))
     .slice(0, 3)
     .map(({ team, gap }) => ({
@@ -104,20 +130,38 @@ export function buildPerformanceProcess(dataset: LeagueDataset): EvidenceItem[] 
       interpretation: `${gap >= 0 ? "Finishing has amplified results" : "Created chances have not fully converted"} within this sample; this is an indicator, not a forecast.`,
       evidence: [
         { label: "Goals", value: String(team.goalsFor) },
-        { label: "Expected goals", value: formatMetric(team.expectedGoals, "decimal") },
+        {
+          label: "Expected goals",
+          value: formatMetric(team.expectedGoals, "decimal"),
+        },
       ],
       confidence: confidenceFromCoverage(team.coverage),
       coverage: team.coverage,
-      limitation: "Opponent strength and game state are not adjusted in this sample.",
+      limitation:
+        "Opponent strength and game state are not adjusted in this sample.",
       tone: gap >= 0 ? "positive" : "caution",
     }));
 }
 
-export function buildSustainabilityWatch(dataset: LeagueDataset): EvidenceItem[] {
+export function buildSustainabilityWatch(
+  dataset: LeagueDataset,
+): EvidenceItem[] {
   return dataset.teams
     .filter((team) => team.consistency !== null)
-    .map((team) => ({ team, process: team.expectedGoals === null ? 0 : (team.expectedGoals - (team.expectedGoalsAgainst ?? 0)) / team.played }))
-    .sort((a, b) => (b.team.consistency ?? 0) + b.process * 10 - ((a.team.consistency ?? 0) + a.process * 10))
+    .map((team) => ({
+      team,
+      process:
+        team.expectedGoals === null
+          ? 0
+          : (team.expectedGoals - (team.expectedGoalsAgainst ?? 0)) /
+            team.played,
+    }))
+    .sort(
+      (a, b) =>
+        (b.team.consistency ?? 0) +
+        b.process * 10 -
+        ((a.team.consistency ?? 0) + a.process * 10),
+    )
     .slice(0, 3)
     .map(({ team, process }) => ({
       id: `sustainability-${team.id}`,
@@ -125,20 +169,31 @@ export function buildSustainabilityWatch(dataset: LeagueDataset): EvidenceItem[]
       observation: `Consistency is ${formatMetric(team.consistency, "percent")} with an underlying balance of ${process >= 0 ? "+" : ""}${process.toFixed(2)} per match.`,
       interpretation: `${process >= 0 ? "Results have supporting process signals" : "Results lack supporting process signals"} within this sample.`,
       evidence: [
-        { label: "Consistency", value: formatMetric(team.consistency, "percent") },
+        {
+          label: "Consistency",
+          value: formatMetric(team.consistency, "percent"),
+        },
         { label: "xG balance / match", value: process.toFixed(2) },
       ],
       confidence: confidenceFromCoverage(team.coverage),
       coverage: team.coverage,
-      limitation: "The sample does not model injuries, schedule difficulty, or tactical changes.",
+      limitation:
+        "The sample does not model injuries, schedule difficulty, or tactical changes.",
       tone: process >= 0 ? "positive" : "caution",
     }));
 }
 
 function weightedScore(values: Array<[number | null, number]>): number | null {
-  const available = values.filter((item): item is [number, number] => item[0] !== null);
+  const available = values.filter(
+    (item): item is [number, number] => item[0] !== null,
+  );
   const weight = available.reduce((sum, item) => sum + item[1], 0);
-  return weight === 0 ? null : available.reduce((sum, [value, itemWeight]) => sum + value * itemWeight, 0) / weight;
+  return weight === 0
+    ? null
+    : available.reduce(
+        (sum, [value, itemWeight]) => sum + value * itemWeight,
+        0,
+      ) / weight;
 }
 
 export function buildRecruitmentSignals(
@@ -147,11 +202,18 @@ export function buildRecruitmentSignals(
 ): RecruitmentSignal[] {
   const teamNames = new Map(dataset.teams.map((team) => [team.id, team.name]));
   return dataset.players
-    .filter((player) => player.minutes >= options.minimumMinutes && player.coverage >= 60)
+    .filter(
+      (player) =>
+        player.minutes >= options.minimumMinutes && player.coverage >= 60,
+    )
     .map((player) => {
-      const score = weightedScore([
-        [player.performance, 0.45], [player.potential, 0.25], [player.opportunity, 0.2], [player.availability, 0.1],
-      ]) ?? 0;
+      const score =
+        weightedScore([
+          [player.performance, 0.45],
+          [player.potential, 0.25],
+          [player.opportunity, 0.2],
+          [player.availability, 0.1],
+        ]) ?? 0;
       const reasons = [
         `Performance signal ${formatMetric(player.performance, "integer")}/100`,
         `Opportunity signal ${formatMetric(player.opportunity, "integer")}/100`,
@@ -166,7 +228,10 @@ export function buildRecruitmentSignals(
         minutes: player.minutes,
         score: Math.round(score),
         reasons,
-        risk: player.age <= 21 ? "Development sample remains short." : "No market-value source is available.",
+        risk:
+          player.age <= 21
+            ? "Development sample remains short."
+            : "No market-value source is available.",
         coverage: player.coverage,
         confidence: confidenceFromCoverage(player.coverage),
       };
@@ -177,14 +242,23 @@ export function buildRecruitmentSignals(
 
 export function buildRoleSupply(dataset: LeagueDataset): RoleSupply[] {
   const counts = new Map<string, number>();
-  dataset.players.filter((player) => player.minutes >= 450).forEach((player) => counts.set(player.role, (counts.get(player.role) ?? 0) + 1));
+  dataset.players
+    .filter((player) => player.minutes >= 450)
+    .forEach((player) =>
+      counts.set(player.role, (counts.get(player.role) ?? 0) + 1),
+    );
   const maximum = Math.max(...counts.values());
   return [...counts.entries()]
     .map(([role, count]) => ({
       role,
       count,
       share: Math.round((count / maximum) * 100),
-      status: count <= 2 ? "scarce" as const : count >= 4 ? "abundant" as const : "balanced" as const,
+      status:
+        count <= 2
+          ? ("scarce" as const)
+          : count >= 4
+            ? ("abundant" as const)
+            : ("balanced" as const),
     }))
     .sort((a, b) => a.count - b.count || a.role.localeCompare(b.role));
 }
@@ -197,10 +271,14 @@ export function buildAnalystBrief(dataset: LeagueDataset): AnalystFinding[] {
     id: `leader-${leader.teamId}`,
     title: `${leader.teamName} sets the current competitive benchmark`,
     observation: `${leader.teamName} leads this sample at ${leader.pointsPerMatch.toFixed(2)} points per match.`,
-    interpretation: "The lead is supported by positive goal balance, but remains descriptive rather than predictive.",
+    interpretation:
+      "The lead is supported by positive goal balance, but remains descriptive rather than predictive.",
     evidence: [
       { label: "Points / match", value: leader.pointsPerMatch.toFixed(2) },
-      { label: "Goal difference / 90", value: leader.goalDifferencePer90.toFixed(2) },
+      {
+        label: "Goal difference / 90",
+        value: leader.goalDifferencePer90.toFixed(2),
+      },
     ],
     confidence: confidenceFromCoverage(leader.coverage),
     coverage: leader.coverage,
@@ -215,18 +293,32 @@ export function buildAnalystBrief(dataset: LeagueDataset): AnalystFinding[] {
 
 export function buildLeagueDashboard(
   dataset: LeagueDataset,
-  options: { minimumMinutes: 450 | 900; axes: readonly [MetricKey, MetricKey, MetricKey] },
+  options: {
+    minimumMinutes: 450 | 900;
+    axes: readonly [MetricKey, MetricKey, MetricKey];
+  },
 ): LeagueDashboardViewModel {
-  const nullableTeamValues = dataset.teams.flatMap((team) => [team.expectedGoals, team.expectedGoalsAgainst, team.possessionPct, team.defensiveActionsPer90, team.consistency]);
+  const nullableTeamValues = dataset.teams.flatMap((team) => [
+    team.expectedGoals,
+    team.expectedGoalsAgainst,
+    team.possessionPct,
+    team.defensiveActionsPer90,
+    team.consistency,
+  ]);
   return {
     leagueState: buildLeagueState(dataset),
     landscape: buildTeamLandscape(dataset, options.axes),
     performanceProcess: buildPerformanceProcess(dataset),
     sustainability: buildSustainabilityWatch(dataset),
-    recruitmentSignals: buildRecruitmentSignals(dataset, { minimumMinutes: options.minimumMinutes }),
+    recruitmentSignals: buildRecruitmentSignals(dataset, {
+      minimumMinutes: options.minimumMinutes,
+    }),
     roleSupply: buildRoleSupply(dataset),
     analystBrief: buildAnalystBrief(dataset),
-    averageCoverage: dataset.teams.reduce((sum, team) => sum + team.coverage, 0) / dataset.teams.length,
-    missingMetricCount: nullableTeamValues.filter((value) => value === null).length,
+    averageCoverage:
+      dataset.teams.reduce((sum, team) => sum + team.coverage, 0) /
+      dataset.teams.length,
+    missingMetricCount: nullableTeamValues.filter((value) => value === null)
+      .length,
   };
 }
