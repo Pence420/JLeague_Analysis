@@ -1,0 +1,121 @@
+export type Confidence = "low" | "medium" | "high";
+export type MetricKey = "attackingOutput" | "possessionControl" | "defensiveDisruption";
+export type PlayerPosition = "GK" | "CB" | "FB/WB" | "DM" | "CM" | "AM" | "W" | "ST";
+
+export interface TeamSeason {
+  id: string;
+  name: string;
+  shortName: string;
+  played: number;
+  points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  expectedGoals: number | null;
+  expectedGoalsAgainst: number | null;
+  possessionPct: number | null;
+  defensiveActionsPer90: number | null;
+  consistency: number | null;
+  coverage: number;
+}
+
+export interface PlayerSeason {
+  id: string;
+  name: string;
+  teamId: string;
+  position: PlayerPosition;
+  role: string;
+  age: number;
+  minutes: number;
+  performance: number | null;
+  potential: number | null;
+  opportunity: number | null;
+  availability: number | null;
+  coverage: number;
+}
+
+export interface LeagueDataset {
+  competition: "J1";
+  season: 2025;
+  snapshotDate: string;
+  methodologyVersion: string;
+  sample: true;
+  teams: TeamSeason[];
+  players: PlayerSeason[];
+}
+
+export interface LeagueStateRow {
+  teamId: string;
+  teamName: string;
+  played: number;
+  pointsPerMatch: number;
+  goalDifferencePer90: number;
+  expectedGoalDifferencePer90: number | null;
+  coverage: number;
+}
+
+export interface TeamLandscapePoint {
+  teamId: string;
+  teamName: string;
+  shortName: string;
+  x: number;
+  y: number;
+  z: number;
+  raw: Record<MetricKey, number>;
+  cluster: "Territorial controller" | "Direct transition" | "Defensive disruptor" | "Compact pragmatist";
+  coverage: number;
+}
+
+export interface EvidenceMetric {
+  label: string;
+  value: string;
+}
+
+export interface EvidenceItem {
+  id: string;
+  title: string;
+  observation: string;
+  interpretation: string;
+  evidence: EvidenceMetric[];
+  confidence: Confidence;
+  coverage: number;
+  limitation: string;
+  tone: "positive" | "caution" | "neutral";
+}
+
+export interface RecruitmentSignal {
+  playerId: string;
+  playerName: string;
+  teamName: string;
+  position: PlayerPosition;
+  role: string;
+  age: number;
+  minutes: number;
+  score: number;
+  reasons: string[];
+  risk: string;
+  coverage: number;
+  confidence: Confidence;
+}
+
+export interface RoleSupply {
+  role: string;
+  count: number;
+  share: number;
+  status: "scarce" | "balanced" | "abundant";
+}
+
+export interface AnalystFinding extends EvidenceItem {
+  rank: 1 | 2 | 3;
+}
+
+export interface LeagueDashboardViewModel {
+  leagueState: LeagueStateRow[];
+  landscape: TeamLandscapePoint[];
+  performanceProcess: EvidenceItem[];
+  sustainability: EvidenceItem[];
+  recruitmentSignals: RecruitmentSignal[];
+  roleSupply: RoleSupply[];
+  analystBrief: AnalystFinding[];
+  averageCoverage: number;
+  missingMetricCount: number;
+}

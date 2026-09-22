@@ -1,0 +1,901 @@
+# J-Scout League Intelligence Vertical Slice Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build a responsive, analytically credible J-Scout League Intelligence page with an island navbar, deterministic sample-data insights, and an accessible interactive 3D team-style landscape.
+
+**Architecture:** A Next.js frontend consumes a typed local data adapter, validates synthetic fixtures, derives view models through pure analytical functions, and renders them through focused dashboard modules. React Three Fiber owns the 3D presentation while a synchronized HTML table and written summary provide the accessible equivalent and WebGL fallback.
+
+**Tech Stack:** Next.js, React, TypeScript, Tailwind CSS, React Three Fiber, Three.js, Zod, Vitest, Testing Library, Playwright, axe-core.
+
+**Spec:** `docs/superpowers/specs/2026-09-22-j-scout-vertical-slice-design.md`
+
+## Global Constraints
+
+- UI copy is English; learning documentation is written in approachable Indonesian.
+- Every statistic is visibly labeled as synthetic sample data.
+- Missing numeric values remain `null` and render as “Not available,” never as zero.
+- No heatmaps, shot-location maps, passing networks, or fabricated spatial data.
+- The first slice has no backend, authentication, file upload, payment, password, webhook, or database surface.
+- The 3D chart must have an equivalent sortable HTML table and deterministic written summary.
+- Reduced-motion and unavailable-WebGL states must remain fully usable.
+- No analytics or tracking service is installed.
+- The assistant must not run `git commit`; the repository owner commits after review.
+- Each visually important page begins with the approved `image-to-code` workflow.
+
+## Review Focus
+
+- A team row with a missing metric must remain visible where possible, display “Not available,” and be excluded only from calculations that require that metric; Task 2 pins this behavior.
+- A corrupted or duplicate fixture must fail validation with a readable data error rather than silently rendering inconsistent insight; Task 2 pins this behavior.
+- A browser without WebGL must receive the same team values, selected axes, and interpretation in HTML form; Task 5 pins this behavior.
+- Keyboard-only and reduced-motion users must be able to select a team and read its evidence without manipulating a 3D canvas; Tasks 3 and 5 pin this behavior.
+- Narrow mobile viewports must not horizontally scroll or hide the sample-data and confidence context; Task 7 pins this behavior.
+
+---
+
+## File Map
+
+```text
+app/
+  error.tsx                         # Recoverable route error state
+  globals.css                       # Tokens, reset, focus, motion, layout utilities
+  layout.tsx                        # Root metadata, fonts, shell
+  loading.tsx                       # Stable dashboard skeleton
+  not-found.tsx                     # Custom 404
+  page.tsx                          # League Intelligence composition only
+  robots.ts                         # Explicit crawler behavior
+components/
+  app-shell/
+    island-nav.tsx                  # Desktop and mobile navigation
+    island-nav.test.tsx
+  charts/
+    team-landscape-3d.tsx           # Canvas and scene composition
+    team-landscape-fallback.tsx     # HTML summary/table alternative
+    team-landscape.test.tsx
+  dashboard/
+    analyst-brief.tsx
+    context-header.tsx
+    data-confidence.tsx
+    league-state.tsx
+    performance-process.tsx
+    recruitment-signals.tsx
+    role-supply-map.tsx
+    sustainability-watch.tsx
+  ui/
+    confidence-badge.tsx
+    disclosure.tsx
+    metric-value.tsx
+features/
+  league-intelligence/
+    analytics.test.ts
+    analytics.ts                    # Pure calculations and deterministic rules
+    fixture-schema.test.ts
+    fixture-schema.ts               # Runtime validation
+    sample-data.ts                  # Clearly synthetic club/player fixture
+    types.ts                        # Domain contracts and view models
+    use-league-dashboard.ts         # Shared filter/selection state
+public/
+  brand/
+    j-scout-mark.svg
+  og/
+    j-scout-league-intelligence.png
+docs/
+  design/
+    league-intelligence-reference.png
+    league-intelligence-reference-analysis.md
+  learning/
+    01-app-shell-and-island-navigation.md
+    02-data-contracts-and-analytics.md
+    03-building-the-3d-team-landscape.md
+    04-accessible-chart-alternatives.md
+    05-responsive-dashboard-composition.md
+    06-testing-and-security-checks.md
+e2e/
+  league-intelligence.spec.ts
+next.config.ts
+playwright.config.ts
+vitest.config.ts
+```
+
+---
+
+### Task 1: Create the Visual Reference and Frontend Foundation
+
+**Files:**
+- Create: `docs/design/league-intelligence-reference.png`
+- Create: `docs/design/league-intelligence-reference-analysis.md`
+- Create: framework files generated by `create-next-app`
+- Create: `vitest.config.ts`
+- Modify: `package.json`
+- Create: `app/not-found.tsx`
+- Create: `app/error.tsx`
+- Create: `app/loading.tsx`
+- Create: `app/robots.ts`
+- Modify: `app/layout.tsx`
+- Modify: `app/globals.css`
+- Modify: `next.config.ts`
+- Test: `app/app-states.test.tsx`
+
+**Interfaces:**
+- Consumes: approved Light Scouting Studio direction from the spec.
+- Produces: a runnable Next.js shell, shared visual tokens, verified global states, and the visual source of truth used by every later task.
+
+- [ ] **Step 1: Generate one large main-page reference image**
+
+Use the `image-to-code` and `imagegen` workflow to generate a 16:10 desktop composition containing the island navbar, contextual header, League State, central 3D Team Style Landscape, Performance vs Process, Recruitment Signals, Role Supply Map, Analyst Brief, and Data Confidence. The prompt must explicitly require warm off-white surfaces, charcoal type, J.League red, restrained electric green, strong analytical hierarchy, and no betting or generic neon-SaaS language.
+
+- [ ] **Step 2: Inspect and record the visual system**
+
+Create `docs/design/league-intelligence-reference-analysis.md` with exact sections for:
+
+```markdown
+# League Intelligence Reference Analysis
+
+## Layout and hierarchy
+## Typography scale
+## Color tokens
+## Spacing and radius rules
+## Depth and border rules
+## Island navigation behavior
+## Chart and evidence relationship
+## Desktop-to-mobile transformation
+## Details intentionally excluded
+```
+
+Record concrete token values and layout proportions inferred from the generated reference. If controls or type are not legible, regenerate a fresh page reference before continuing.
+
+- [ ] **Step 3: Scaffold the application**
+
+Run:
+
+```bash
+npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias="@/*" --use-npm
+npm install three @react-three/fiber @react-three/drei zod lucide-react
+npm install -D vitest jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event @vitejs/plugin-react vite-tsconfig-paths @playwright/test @axe-core/playwright
+```
+
+Expected: the app starts without prompts after dependencies resolve, and `package-lock.json` is created.
+
+- [ ] **Step 4: Write failing global-state tests**
+
+Create `app/app-states.test.tsx`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import ErrorState from "./error";
+import Loading from "./loading";
+import NotFound from "./not-found";
+
+describe("global application states", () => {
+  it("keeps loading geometry stable", () => {
+    const { container } = render(<Loading />);
+    expect(container.querySelectorAll('[data-skeleton="panel"]')).toHaveLength(6);
+  });
+
+  it("offers recovery after a route error", () => {
+    render(<ErrorState error={new Error("network detail")} reset={() => undefined} />);
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    expect(screen.queryByText("network detail")).not.toBeInTheDocument();
+  });
+
+  it("renders a useful custom 404", () => {
+    render(<NotFound />);
+    expect(screen.getByRole("link", { name: /return to league intelligence/i })).toHaveAttribute("href", "/");
+  });
+});
+```
+
+- [ ] **Step 5: Run the tests and verify failure**
+
+Run:
+
+```bash
+npm test -- app/app-states.test.tsx
+```
+
+Expected: FAIL because the global states and Vitest setup are not implemented.
+
+- [ ] **Step 6: Configure tests and implement the global shell**
+
+Configure Vitest with jsdom, `@/*` alias resolution, and `@testing-library/jest-dom`. Add these package scripts:
+
+```json
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test"
+  }
+}
+```
+
+Keep the `dev`, `build`, `start`, and `lint` scripts generated by Next.js. Implement:
+
+- Metadata title: `J-Scout — J1 League Intelligence`.
+- Description: `Explainable J1 League scouting analytics built from clearly labeled sample data.`
+- Safe error copy that does not echo exception messages.
+- Six stable skeleton panels.
+- A custom 404 with a home link.
+- `robots.ts` returning index/follow for the public prototype.
+- Global focus-visible, reduced-motion, and design-token rules extracted from the reference.
+- Security headers in `next.config.ts`: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+
+- [ ] **Step 7: Verify the foundation**
+
+Run:
+
+```bash
+npm test -- app/app-states.test.tsx
+npm run lint
+npm run build
+```
+
+Expected: all tests pass; lint and production build exit with code 0.
+
+- [ ] **Step 8: Stop for owner review without committing**
+
+Report the generated reference path, commands run, and changed files. Do not run `git commit`.
+
+---
+
+### Task 2: Define and Validate the Synthetic Analytical Domain
+
+**Files:**
+- Create: `features/league-intelligence/types.ts`
+- Create: `features/league-intelligence/fixture-schema.ts`
+- Create: `features/league-intelligence/fixture-schema.test.ts`
+- Create: `features/league-intelligence/sample-data.ts`
+- Create: `features/league-intelligence/analytics.ts`
+- Create: `features/league-intelligence/analytics.test.ts`
+
+**Interfaces:**
+- Consumes: no UI components; only TypeScript and Zod.
+- Produces: `LeagueDataset`, `buildLeagueDashboard(dataset, options): LeagueDashboardViewModel`, and `formatMetric(value, format): string` for all dashboard modules.
+
+- [ ] **Step 1: Define exact domain contracts**
+
+Create `types.ts` with these core interfaces:
+
+```ts
+export type Confidence = "low" | "medium" | "high";
+export type MetricKey = "attackingOutput" | "possessionControl" | "defensiveDisruption";
+
+export interface TeamSeason {
+  id: string;
+  name: string;
+  shortName: string;
+  played: number;
+  points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  expectedGoals: number | null;
+  expectedGoalsAgainst: number | null;
+  possessionPct: number | null;
+  defensiveActionsPer90: number | null;
+  consistency: number | null;
+  coverage: number;
+}
+
+export interface PlayerSeason {
+  id: string;
+  name: string;
+  teamId: string;
+  position: "GK" | "CB" | "FB/WB" | "DM" | "CM" | "AM" | "W" | "ST";
+  role: string;
+  age: number;
+  minutes: number;
+  performance: number | null;
+  potential: number | null;
+  opportunity: number | null;
+  availability: number | null;
+  coverage: number;
+}
+
+export interface LeagueDataset {
+  competition: "J1";
+  season: 2025;
+  snapshotDate: string;
+  methodologyVersion: string;
+  sample: true;
+  teams: TeamSeason[];
+  players: PlayerSeason[];
+}
+```
+
+Add view-model types for `LeagueStateRow`, `TeamLandscapePoint`, `EvidenceItem`, `RecruitmentSignal`, `RoleSupply`, `AnalystFinding`, and `LeagueDashboardViewModel` in the same file.
+
+- [ ] **Step 2: Write validation tests**
+
+Create `fixture-schema.test.ts` with tests proving that:
+
+```ts
+it("rejects duplicate team ids", () => {
+  const result = leagueDatasetSchema.safeParse(datasetWithDuplicateTeams);
+  expect(result.success).toBe(false);
+});
+
+it("rejects coverage outside zero to one hundred", () => {
+  const result = leagueDatasetSchema.safeParse(datasetWithCoverage(101));
+  expect(result.success).toBe(false);
+});
+
+it("accepts null for an unavailable analytical metric", () => {
+  const result = leagueDatasetSchema.safeParse(datasetWithExpectedGoals(null));
+  expect(result.success).toBe(true);
+});
+```
+
+- [ ] **Step 3: Run schema tests and verify failure**
+
+Run `npm test -- features/league-intelligence/fixture-schema.test.ts`.
+
+Expected: FAIL because the schema is absent.
+
+- [ ] **Step 4: Implement runtime validation and the fixture**
+
+Implement `leagueDatasetSchema` with Zod refinements for unique team IDs, unique player IDs, valid player-team references, non-negative counts, `played > 0`, coverage within 0–100, and ISO snapshot dates.
+
+Create a visibly synthetic fixture with 12 fictional club names and 24 fictional players. Use rounded, plausible values designed to exercise every analytical branch. Include at least one nullable xG field and one low-coverage player. Export only the parsed result:
+
+```ts
+export const sampleLeagueDataset: LeagueDataset = leagueDatasetSchema.parse(rawSampleLeagueDataset);
+```
+
+- [ ] **Step 5: Write failing analytics tests**
+
+Create `analytics.test.ts` covering:
+
+```ts
+expect(per90(18, 900)).toBe(1.8);
+expect(per90(null, 900)).toBeNull();
+expect(per90(3, 0)).toBeNull();
+expect(formatMetric(null, "decimal")).toBe("Not available");
+expect(confidenceFromCoverage(79)).toBe("low");
+expect(confidenceFromCoverage(80)).toBe("medium");
+expect(confidenceFromCoverage(90)).toBe("high");
+expect(buildRecruitmentSignals(dataset, { minimumMinutes: 900 }).every((item) => item.minutes >= 900)).toBe(true);
+expect(buildRecruitmentSignals(dataset, { minimumMinutes: 900 }).every((item) => item.coverage >= 60)).toBe(true);
+expect(buildTeamLandscape(dataset, axes).find((point) => point.teamId === teamMissingXAxis)).toBeUndefined();
+expect(buildLeagueState(dataset).find((row) => row.teamId === teamMissingXAxis)).toBeDefined();
+```
+
+- [ ] **Step 6: Implement minimal pure analytics**
+
+Implement and export:
+
+```ts
+export function per90(value: number | null, minutes: number): number | null;
+export function formatMetric(value: number | null, format: "integer" | "decimal" | "percent"): string;
+export function confidenceFromCoverage(coverage: number): Confidence;
+export function buildLeagueState(dataset: LeagueDataset): LeagueStateRow[];
+export function buildTeamLandscape(dataset: LeagueDataset, axes: readonly [MetricKey, MetricKey, MetricKey]): TeamLandscapePoint[];
+export function buildPerformanceProcess(dataset: LeagueDataset): EvidenceItem[];
+export function buildSustainabilityWatch(dataset: LeagueDataset): EvidenceItem[];
+export function buildRecruitmentSignals(dataset: LeagueDataset, options: { minimumMinutes: 450 | 900 }): RecruitmentSignal[];
+export function buildRoleSupply(dataset: LeagueDataset): RoleSupply[];
+export function buildAnalystBrief(dataset: LeagueDataset): AnalystFinding[];
+export function buildLeagueDashboard(dataset: LeagueDataset, options: { minimumMinutes: 450 | 900; axes: readonly [MetricKey, MetricKey, MetricKey] }): LeagueDashboardViewModel;
+```
+
+Use deterministic sorting with ID as the final tie-breaker. Evidence text must use cautious phrases such as “indicates,” “suggests,” and “within this sample.”
+
+- [ ] **Step 7: Verify the domain layer**
+
+Run:
+
+```bash
+npm test -- features/league-intelligence
+npm run lint
+```
+
+Expected: validation and analytics suites pass with no lint errors.
+
+- [ ] **Step 8: Stop for owner review without committing**
+
+Report fixture limitations, test totals, and changed files. Do not run `git commit`.
+
+---
+
+### Task 3: Build the Design System and Island Navigation
+
+**Files:**
+- Create: `public/brand/j-scout-mark.svg`
+- Create: `components/ui/metric-value.tsx`
+- Create: `components/ui/confidence-badge.tsx`
+- Create: `components/ui/disclosure.tsx`
+- Create: `components/app-shell/island-nav.tsx`
+- Create: `components/app-shell/island-nav.test.tsx`
+- Modify: `app/layout.tsx`
+- Modify: `app/globals.css`
+
+**Interfaces:**
+- Consumes: design tokens from Task 1 and `Confidence` from Task 2.
+- Produces: `IslandNav`, `MetricValue`, `ConfidenceBadge`, and `Disclosure` used by Tasks 4–7.
+
+- [ ] **Step 1: Write the failing navigation tests**
+
+Create `island-nav.test.tsx`:
+
+```tsx
+it("marks League as the current destination", () => {
+  render(<IslandNav activeHref="/" />);
+  expect(screen.getByRole("link", { name: "League" })).toHaveAttribute("aria-current", "page");
+});
+
+it("opens the mobile destination menu with the keyboard", async () => {
+  const user = userEvent.setup();
+  render(<IslandNav activeHref="/" />);
+  await user.tab();
+  await user.keyboard("{Enter}");
+  expect(screen.getByRole("menu", { name: /more destinations/i })).toBeVisible();
+});
+```
+
+- [ ] **Step 2: Run the test and verify failure**
+
+Run `npm test -- components/app-shell/island-nav.test.tsx`.
+
+Expected: FAIL because the components do not exist.
+
+- [ ] **Step 3: Implement tokens and primitives**
+
+Translate the visual analysis into CSS custom properties for canvas, surface, ink, muted ink, border, shadow, red, green, blue, amber, radii, gutters, and elevation. Implement:
+
+```ts
+MetricValue({ value, format, label }: { value: number | null; format: "integer" | "decimal" | "percent"; label: string })
+ConfidenceBadge({ confidence }: { confidence: Confidence })
+Disclosure({ summary, children }: React.PropsWithChildren<{ summary: string }>)
+```
+
+`MetricValue` must call `formatMetric` so missing values consistently render “Not available.”
+
+- [ ] **Step 4: Implement responsive island navigation**
+
+Use semantic links for League, Teams, Players, Moneyball, Compare, and Methodology. Render the complete centered top island at desktop widths and a bottom navigation with League, Players, Moneyball, and a keyboard-operable “More” menu on mobile. Preserve visible focus rings and a minimum 44px touch target.
+
+- [ ] **Step 5: Verify navigation and primitives**
+
+Run:
+
+```bash
+npm test -- components/app-shell/island-nav.test.tsx
+npm run lint
+```
+
+Expected: tests pass and lint exits with code 0.
+
+- [ ] **Step 6: Stop for owner review without committing**
+
+Report desktop/mobile behavior and changed files. Do not run `git commit`.
+
+---
+
+### Task 4: Build the Context Header and League State
+
+**Files:**
+- Create: `features/league-intelligence/use-league-dashboard.ts`
+- Create: `components/dashboard/context-header.tsx`
+- Create: `components/dashboard/league-state.tsx`
+- Create: `components/dashboard/data-confidence.tsx`
+- Create: `components/dashboard/league-overview.test.tsx`
+- Modify: `app/page.tsx`
+
+**Interfaces:**
+- Consumes: `sampleLeagueDataset`, `buildLeagueDashboard`, `IslandNav`, and UI primitives.
+- Produces: shared dashboard state `{ viewModel, selectedTeamId, setSelectedTeamId, axes, setAxis, minimumMinutes, setMinimumMinutes }` and the top-level analytical context.
+
+- [ ] **Step 1: Write failing interaction tests**
+
+Create `league-overview.test.tsx`:
+
+```tsx
+it("always identifies the fixture as synthetic sample data", () => {
+  render(<LeagueOverview />);
+  expect(screen.getAllByText(/synthetic sample data/i).length).toBeGreaterThan(0);
+});
+
+it("switches the minimum-minutes rule and updates recruitment eligibility", async () => {
+  const user = userEvent.setup();
+  render(<LeagueOverview />);
+  await user.selectOptions(screen.getByLabelText(/minimum minutes/i), "450");
+  expect(screen.getByText(/low-sample mode/i)).toBeVisible();
+});
+
+it("renders absent metrics as Not available", () => {
+  render(<LeagueOverview />);
+  expect(screen.getByText("Not available")).toBeInTheDocument();
+});
+```
+
+- [ ] **Step 2: Run tests and verify failure**
+
+Run `npm test -- components/dashboard/league-overview.test.tsx`.
+
+Expected: FAIL because the hook and page modules are absent.
+
+- [ ] **Step 3: Implement the shared dashboard hook**
+
+Initialize the hook with axes `attackingOutput`, `possessionControl`, and `defensiveDisruption`, minimum minutes 900, and the highest-ranked eligible team. Rebuild the memoized view model only when axes or minimum minutes change.
+
+- [ ] **Step 4: Implement the contextual modules**
+
+`ContextHeader` renders the title, locked J1 2025 season, snapshot date, methodology version, minimum-minutes selector, and persistent sample badge. `LeagueState` renders the leading analytical rows with evidence labels. `DataConfidence` discloses coverage, missing fields, and the fact that the fixture is synthetic.
+
+- [ ] **Step 5: Compose the first page slice**
+
+Update `app/page.tsx` so it owns no analytical formulas. It should only request the shared hook and compose the navbar, context header, league state, and confidence modules.
+
+- [ ] **Step 6: Verify the page slice**
+
+Run:
+
+```bash
+npm test -- components/dashboard/league-overview.test.tsx
+npm run lint
+npm run build
+```
+
+Expected: tests pass and the page builds successfully.
+
+- [ ] **Step 7: Stop for owner review without committing**
+
+Report analytical behaviors, commands run, and changed files. Do not run `git commit`.
+
+---
+
+### Task 5: Build the Accessible 3D Team Style Landscape
+
+**Files:**
+- Create: `components/charts/team-landscape-3d.tsx`
+- Create: `components/charts/team-landscape-fallback.tsx`
+- Create: `components/charts/team-landscape.test.tsx`
+- Modify: `app/page.tsx`
+
+**Interfaces:**
+- Consumes: `TeamLandscapePoint[]`, selected team ID, axis tuple, and callbacks from `useLeagueDashboard`.
+- Produces: `TeamLandscape({ points, axes, selectedTeamId, onSelectTeam, forceFallback? })` with synchronized 3D and HTML representations.
+
+- [ ] **Step 1: Write failing chart behavior tests**
+
+Create `team-landscape.test.tsx`:
+
+```tsx
+it("renders the complete HTML alternative when WebGL is unavailable", () => {
+  render(<TeamLandscape points={points} axes={axes} selectedTeamId={null} onSelectTeam={() => undefined} forceFallback />);
+  expect(screen.getByRole("table", { name: /team style data/i })).toBeVisible();
+  expect(screen.getAllByRole("row")).toHaveLength(points.length + 1);
+});
+
+it("selects a team from the keyboard-accessible companion list", async () => {
+  const onSelectTeam = vi.fn();
+  const user = userEvent.setup();
+  render(<TeamLandscape points={points} axes={axes} selectedTeamId={null} onSelectTeam={onSelectTeam} forceFallback />);
+  await user.click(screen.getByRole("button", { name: points[0].teamName }));
+  expect(onSelectTeam).toHaveBeenCalledWith(points[0].teamId);
+});
+
+it("keeps the fallback summary aligned with the selected axes", () => {
+  render(<TeamLandscape points={points} axes={axes} selectedTeamId={points[0].teamId} onSelectTeam={() => undefined} forceFallback />);
+  expect(screen.getByText(/attacking output.*possession.*defensive disruption/i)).toBeVisible();
+});
+```
+
+- [ ] **Step 2: Run tests and verify failure**
+
+Run `npm test -- components/charts/team-landscape.test.tsx`.
+
+Expected: FAIL because the chart components are absent.
+
+- [ ] **Step 3: Implement the HTML alternative first**
+
+Build a sortable semantic table with team, three selected metric values, tactical cluster, coverage, and a “Select” button. Above the table, render a sentence explaining the selected axes and the currently selected team’s position. The table is always present in the DOM inside a labeled disclosure, not generated only after an error.
+
+- [ ] **Step 4: Implement the 3D scene**
+
+Render normalized `[-1, 1]` coordinates from `TeamLandscapePoint`. Use:
+
+- Three labeled axes.
+- A subtle floor grid.
+- One sphere per club with size tied to coverage only within a narrow readable range.
+- Color tied to tactical cluster and reinforced by labels.
+- Bounded orbit controls.
+- A selected-team halo.
+- No autoplay rotation when reduced motion is requested.
+
+Canvas selection updates the same `onSelectTeam` callback as the HTML list. Dynamically import the canvas with server-side rendering disabled.
+
+- [ ] **Step 5: Implement WebGL detection and recovery**
+
+Catch WebGL initialization failure locally, show the HTML alternative expanded, and render the message: `3D view is unavailable in this browser. The complete team-style data remains available below.` Never hide or truncate values after a canvas failure.
+
+- [ ] **Step 6: Verify the chart**
+
+Run:
+
+```bash
+npm test -- components/charts/team-landscape.test.tsx
+npm run lint
+npm run build
+```
+
+Expected: chart tests pass; production compilation succeeds without attempting to render WebGL on the server.
+
+- [ ] **Step 7: Stop for owner review without committing**
+
+Report interaction, fallback behavior, test totals, and changed files. Do not run `git commit`.
+
+---
+
+### Task 6: Build the Decision-Support Modules
+
+**Files:**
+- Create: `components/dashboard/performance-process.tsx`
+- Create: `components/dashboard/sustainability-watch.tsx`
+- Create: `components/dashboard/recruitment-signals.tsx`
+- Create: `components/dashboard/role-supply-map.tsx`
+- Create: `components/dashboard/analyst-brief.tsx`
+- Create: `components/dashboard/decision-support.test.tsx`
+- Modify: `app/page.tsx`
+
+**Interfaces:**
+- Consumes: evidence, recruitment, role-supply, analyst-finding, selection, and confidence fields from `LeagueDashboardViewModel`.
+- Produces: the explanatory modules that complete the page’s reasoning chain.
+
+- [ ] **Step 1: Write failing evidence tests**
+
+Create `decision-support.test.tsx`:
+
+```tsx
+it("shows evidence and cautious interpretation for process flags", async () => {
+  render(<PerformanceProcess items={items} />);
+  expect(screen.getByText(/within this sample/i)).toBeVisible();
+  expect(screen.getByRole("button", { name: /show evidence/i })).toBeVisible();
+});
+
+it("shows two reasons, one risk, coverage, and confidence for every recruitment signal", () => {
+  render(<RecruitmentSignals items={[signal]} />);
+  expect(screen.getAllByRole("listitem")).toHaveLength(3);
+  expect(screen.getByText(/coverage/i)).toBeVisible();
+  expect(screen.getByText(new RegExp(signal.confidence, "i"))).toBeVisible();
+});
+
+it("renders exactly three ranked analyst findings", () => {
+  render(<AnalystBrief findings={findings} />);
+  expect(screen.getAllByRole("article")).toHaveLength(3);
+});
+```
+
+- [ ] **Step 2: Run tests and verify failure**
+
+Run `npm test -- components/dashboard/decision-support.test.tsx`.
+
+Expected: FAIL because the modules do not exist.
+
+- [ ] **Step 3: Implement evidence-led modules**
+
+Each module must render its conclusion first, its supporting metrics second, and limitations/coverage third. Use semantic headings and disclosure controls. `RecruitmentSignals` must present player identity, two positive evidence items, one risk, minutes, coverage, and confidence. `RoleSupplyMap` must use labeled horizontal quantities rather than color alone.
+
+- [ ] **Step 4: Complete page composition**
+
+Arrange the modules in the approved asymmetric rhythm:
+
+1. Context Header.
+2. League State plus 3D Team Style Landscape.
+3. Performance vs Process plus Sustainability Watch.
+4. Recruitment Signals plus Role Supply Map.
+5. Analyst Brief plus Data Confidence.
+
+Avoid placing an additional rounded wrapper around the entire dashboard.
+
+- [ ] **Step 5: Verify decision support**
+
+Run:
+
+```bash
+npm test -- components/dashboard/decision-support.test.tsx
+npm test
+npm run lint
+```
+
+Expected: all unit/component tests pass and lint exits with code 0.
+
+- [ ] **Step 6: Stop for owner review without committing**
+
+Report the generated insights, visible limitations, and changed files. Do not run `git commit`.
+
+---
+
+### Task 7: Finish Responsive, Accessibility, Metadata, and Security Behavior
+
+**Files:**
+- Create: `e2e/league-intelligence.spec.ts`
+- Create: `playwright.config.ts`
+- Create: `public/og/j-scout-league-intelligence.png`
+- Modify: `app/globals.css`
+- Modify: `app/layout.tsx`
+- Modify: `next.config.ts`
+- Modify: dashboard and chart components only where checks reveal failures.
+
+**Interfaces:**
+- Consumes: the complete page from Tasks 1–6.
+- Produces: verified desktop/mobile behavior, metadata, and launch/security surface.
+
+- [ ] **Step 1: Write the end-to-end checks**
+
+Create `e2e/league-intelligence.spec.ts`:
+
+```ts
+import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+
+test("desktop league intelligence journey", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "J1 League Intelligence" })).toBeVisible();
+  await expect(page.getByText(/synthetic sample data/i).first()).toBeVisible();
+  await expect(page.getByRole("region", { name: /team style landscape/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /analyst brief/i })).toBeVisible();
+});
+
+test("mobile page has no horizontal overflow and keeps confidence visible", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  expect(overflow).toBe(false);
+  await expect(page.getByText(/synthetic sample data/i).first()).toBeVisible();
+  await expect(page.getByRole("navigation", { name: /primary/i })).toBeVisible();
+});
+
+test("page has no serious accessibility violations", async ({ page }) => {
+  await page.goto("/");
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+});
+```
+
+- [ ] **Step 2: Install the Playwright browser and verify failure**
+
+Run:
+
+```bash
+npx playwright install chromium
+npm run build
+npm run start
+```
+
+In a second terminal run `npx playwright test e2e/league-intelligence.spec.ts`.
+
+Expected: at least one responsive or accessibility assertion fails before the final polish pass.
+
+- [ ] **Step 3: Complete responsive behavior**
+
+Tune the CSS so:
+
+- The content maxes at 1440px with fluid side gutters.
+- The 3D landscape remains at least 420px tall on desktop and 340px on mobile.
+- The desktop island nav becomes a fixed bottom island below 768px.
+- Page content includes bottom padding so the mobile island never obscures controls.
+- Tables scroll within their own labeled containers.
+- No viewport at 390px, 768px, 1024px, or 1440px has page-level horizontal overflow.
+
+- [ ] **Step 4: Complete metadata and asset behavior**
+
+Generate a dedicated 1200×630 Open Graph image in the same design language, rather than cropping the dashboard reference. Add it with the favicon/brand mark, an environment-configured canonical root driven by `NEXT_PUBLIC_SITE_URL` with `http://localhost:3000` as the development default, and descriptive metadata. All meaningful raster images receive useful alt text; decorative marks use empty alt text or CSS.
+
+- [ ] **Step 5: Run security-oriented source checks**
+
+Run:
+
+```bash
+rg -n "dangerouslySetInnerHTML|NEXT_PUBLIC_.*(SECRET|TOKEN|KEY)|console\.(log|debug)|Access-Control-Allow-Origin.*\*" app components features next.config.ts
+npm audit --omit=dev
+```
+
+Expected: the source scan returns no matches. `npm audit --omit=dev` reports no unresolved high or critical production vulnerability; any registry advisory is recorded with package, severity, and mitigation.
+
+- [ ] **Step 6: Run the complete quality gate**
+
+Run:
+
+```bash
+npm test
+npm run lint
+npm run build
+npx playwright test
+```
+
+Expected: all commands exit with code 0.
+
+- [ ] **Step 7: Perform manual checks**
+
+Verify keyboard navigation from the first nav item through axis controls, team selection, evidence disclosures, and mobile overflow menu. Verify reduced-motion mode, 200% browser zoom, WebGL-disabled fallback, and readable focus indicators. Record results in the final handoff.
+
+- [ ] **Step 8: Stop for owner review without committing**
+
+Report automated/manual results and changed files. Do not run `git commit`.
+
+---
+
+### Task 8: Write the Owner Learning Pack and Final Handoff
+
+**Files:**
+- Create: `docs/learning/01-app-shell-and-island-navigation.md`
+- Create: `docs/learning/02-data-contracts-and-analytics.md`
+- Create: `docs/learning/03-building-the-3d-team-landscape.md`
+- Create: `docs/learning/04-accessible-chart-alternatives.md`
+- Create: `docs/learning/05-responsive-dashboard-composition.md`
+- Create: `docs/learning/06-testing-and-security-checks.md`
+- Create: `README.md`
+
+**Interfaces:**
+- Consumes: final implementation paths, commands, and design decisions.
+- Produces: a reproducible setup guide and six focused Indonesian learning modules.
+
+- [ ] **Step 1: Write the six learning notes**
+
+Each note must contain these headings with concrete links to the implemented files:
+
+```markdown
+# [Topic]
+
+## Masalah yang kita selesaikan
+## Mental model
+## Peta file
+## Aliran data dan event
+## Keputusan penting
+## Kesalahan yang sering terjadi
+## Latihan buat lo
+## Cara memverifikasi latihan
+```
+
+Exercises must be small and independent. Examples include adding one nav destination, defining one new metric formatter, adding a fourth axis preset, testing a null metric, rearranging one mobile module, and adding one safe security header.
+
+- [ ] **Step 2: Write the README**
+
+Document:
+
+- Product purpose and evidence limitations.
+- Synthetic sample-data warning.
+- Node/npm prerequisites.
+- `npm install`, `npm run dev`, `npm test`, `npm run lint`, `npm run build`, and `npx playwright test` commands.
+- Project structure.
+- Why the 3D chart has an HTML equivalent.
+- How the future API adapter replaces the local fixture provider.
+- A statement that the scores are decision-support signals, not guarantees.
+
+- [ ] **Step 3: Verify every documentation path**
+
+Run:
+
+```bash
+for file in docs/learning/*.md; do test -s "$file"; done
+rg -n "Synthetic sample|decision-support|3D|accessib" README.md docs/learning
+```
+
+Expected: all six notes are non-empty and the README contains the required limitations and accessibility explanation.
+
+- [ ] **Step 4: Run the final verification**
+
+Run:
+
+```bash
+npm test
+npm run lint
+npm run build
+npx playwright test
+git status --short
+```
+
+Expected: all quality commands pass. `git status --short` lists only the reviewed implementation and documentation changes.
+
+- [ ] **Step 5: Handoff without committing**
+
+Provide the owner with:
+
+- The running command.
+- The generated reference and page screenshot.
+- The exact test/build results.
+- The learning-note index.
+- Known limitations and the next recommended slice.
+- A reminder that the owner controls all commits.
+
+Do not run `git commit` or `git push`.

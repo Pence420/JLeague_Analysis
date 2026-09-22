@@ -1,0 +1,61 @@
+import { leagueDatasetSchema } from "./fixture-schema";
+import type { LeagueDataset, PlayerPosition } from "./types";
+
+const teams = [
+  ["harbor-kobe", "Harbor Kobe", "HKB", 72, 41, 19, 39.2, 20.8, 57.8, 14.2, 84, 96],
+  ["setouchi-violet", "Setouchi Violet", "STV", 68, 38, 21, 36.1, 23.4, 55.6, 15.8, 80, 94],
+  ["machida-orbit", "Machida Orbit", "MCO", 63, 34, 22, 33.4, 24.1, 52.1, 18.4, 82, 92],
+  ["osaka-forge", "Osaka Forge", "OSF", 59, 32, 25, 31.2, 25.9, 54.2, 16.1, 74, 90],
+  ["cerezo-north", "Cerezo North", "CRN", 55, 30, 26, 29.4, 27.2, 51.8, 17.2, 67, 87],
+  ["ibaraki-antlers", "Ibaraki Antlers", "IBA", 52, 29, 28, 28.2, 28.5, 48.8, 20.1, 63, 85],
+  ["tokyo-verde", "Tokyo Verde", "TVE", 49, 25, 24, 27.3, 23.8, 43.9, 22.3, 78, 91],
+  ["urawa-scarlet", "Urawa Scarlet", "URS", 48, 27, 28, 28.9, 26.1, 50.4, 19.3, 59, 83],
+  ["yokohama-tide", "Yokohama Tide", "YKT", 45, 25, 29, 26.8, 29.2, 53.1, 15.1, 57, 82],
+  ["kashiwa-sun", "Kashiwa Sun", "KSW", 44, 24, 30, 25.4, 31.4, 45.8, 21.1, 55, 79],
+  ["shonan-coast", "Shonan Coast", "SHC", 39, 21, 34, 22.3, 35.7, 44.1, 23.2, 46, 77],
+  ["niigata-alpine", "Niigata Alpine", "NGA", 36, 20, 36, null, 36.8, 49.1, 18.1, 43, 68],
+] as const;
+
+const roles: Array<[PlayerPosition, string]> = [
+  ["GK", "Sweeper keeper"], ["GK", "Sweeper keeper"],
+  ["CB", "Ball-playing CB"], ["CB", "Ball-playing CB"], ["CB", "Ball-playing CB"], ["CB", "Ball-playing CB"],
+  ["FB/WB", "Overlapping full-back"], ["FB/WB", "Overlapping full-back"], ["FB/WB", "Overlapping full-back"], ["FB/WB", "Overlapping full-back"],
+  ["DM", "Ball winner"], ["DM", "Ball winner"], ["DM", "Ball winner"],
+  ["CM", "Progressor"], ["CM", "Progressor"], ["CM", "Progressor"],
+  ["AM", "Creator"], ["AM", "Creator"],
+  ["W", "Pressing winger"], ["W", "Pressing winger"], ["W", "Pressing winger"], ["W", "Pressing winger"],
+  ["ST", "Link forward"], ["ST", "Link forward"],
+];
+
+const givenNames = ["Ren", "Sora", "Haru", "Kaito", "Riku", "Yuto", "Minato", "Itsuki", "Akira", "Daichi", "Reo", "Takumi", "Hinata", "Rin", "Koki", "Nao", "Kei", "Arata", "Jin", "Ryota", "Toma", "Shun", "Aoi", "Sena"];
+const familyNames = ["Amano", "Mizuno", "Kanda", "Sakai", "Endo", "Narita", "Mori", "Ishida", "Fujita", "Ono", "Kubo", "Hase", "Arai", "Sato", "Ueda", "Kono", "Nakai", "Hara", "Sudo", "Tsuji", "Maki", "Ando", "Kishi", "Noda"];
+
+const rawSampleLeagueDataset = {
+  competition: "J1",
+  season: 2025,
+  snapshotDate: "2025-07-20",
+  methodologyVersion: "sample-0.1.0",
+  sample: true,
+  teams: teams.map(([id, name, shortName, points, goalsFor, goalsAgainst, expectedGoals, expectedGoalsAgainst, possessionPct, defensiveActionsPer90, consistency, coverage]) => ({
+    id, name, shortName, played: 24, points, goalsFor, goalsAgainst, expectedGoals, expectedGoalsAgainst, possessionPct, defensiveActionsPer90, consistency, coverage,
+  })),
+  players: givenNames.map((givenName, index) => {
+    const [position, role] = roles[index];
+    return {
+      id: `sample-player-${index + 1}`,
+      name: `${givenName} ${familyNames[index]}`,
+      teamId: teams[index % teams.length][0],
+      position,
+      role,
+      age: 19 + (index % 10),
+      minutes: index === 22 ? 520 : 940 + ((index * 137) % 1250),
+      performance: index === 23 ? null : 62 + ((index * 11) % 33),
+      potential: 58 + ((index * 13) % 39),
+      opportunity: 60 + ((index * 17) % 35),
+      availability: 70 + ((index * 7) % 29),
+      coverage: index === 22 ? 57 : 74 + ((index * 5) % 25),
+    };
+  }),
+} as const;
+
+export const sampleLeagueDataset: LeagueDataset = leagueDatasetSchema.parse(rawSampleLeagueDataset) as LeagueDataset;

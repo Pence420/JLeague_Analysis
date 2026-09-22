@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+:root {
+  --canvas: #f4f3ef;
+  --surface: #ffffff;
+  --surface-soft: #f8f8f5;
+  --ink: #151619;
+  --ink-muted: #6f7279;
+  --line: #dedfda;
+  --nav: #1e2024;
+  --red: #ed1b2f;
+  --green: #20a65a;
+  --blue: #3578db;
+  --amber: #eca51a;
+  --risk: #e6404c;
+  --radius-card: 1.125rem;
+  --radius-control: 0.75rem;
+  --shadow-card: 0 16px 40px rgba(24, 28, 36, 0.06);
+  --shadow-nav: 0 18px 50px rgba(18, 20, 24, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--canvas);
+  color: var(--ink);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(237, 27, 47, 0.045), transparent 24rem),
+    var(--canvas);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+select,
+a {
+  font: inherit;
+}
+
+button,
+select {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--blue), white 20%);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(237, 27, 47, 0.16);
+}
+
+.surface-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--surface), transparent 1%);
+  box-shadow: var(--shadow-card);
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--red);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.module-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">J-Scout mark</title>
+  <path fill="#151619" d="M8 11h21v15c0 15-7 24-21 27V11Z"/>
+  <path fill="#ed1b2f" d="M35 7h21v24c0 12-7 21-21 26V7Z"/>
+  <path fill="#f4f3ef" d="M29 24h6v10h-6z"/>
+</svg>
