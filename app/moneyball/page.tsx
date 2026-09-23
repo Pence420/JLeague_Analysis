@@ -41,7 +41,7 @@ export default function MoneyballPage() {
   return (
     <PageFrame
       title="Moneyball shortlist"
-      description="Re-rank eligible players with transparent, role-aware weighting."
+      description="Re-rank real 2025 players with transparent J-Scout derived weights."
     >
       <section className="mb-3 rounded-xl border border-[var(--line)] bg-white p-5">
         <div className="flex flex-wrap items-end gap-3">
@@ -170,8 +170,9 @@ export default function MoneyballPage() {
               ))}
             </div>
             <p className="mt-6 text-xs leading-5 text-[var(--ink-muted)]">
-              Opportunity replaces financial value because no licensed
-              market-value source is connected.
+              All four scores are J-Scout derived from official appearances,
+              minutes, goals and age. They are discovery aids, not valuations
+              or scouting verdicts.
             </p>
           </aside>
         )}

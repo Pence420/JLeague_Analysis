@@ -6,11 +6,11 @@ export function RecruitmentSignals({ items }: { items: RecruitmentSignal[] }) {
     <section className="surface-card p-5">
       <div className="flex items-end justify-between">
         <div>
-          <p className="eyebrow">Players worth a second look</p>
-          <h2 className="module-title">Recruitment Signals</h2>
+          <p className="eyebrow">High involvement, transparent inputs</p>
+          <h2 className="module-title">Player Signals</h2>
         </div>
         <span className="text-xs text-[var(--ink-muted)]">
-          Opportunity, not valuation
+          J-Scout derived score
         </span>
       </div>
       <div className="mt-5 divide-y divide-[var(--line)]">

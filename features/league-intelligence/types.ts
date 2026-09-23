@@ -1,14 +1,17 @@
 export type Confidence = "low" | "medium" | "high";
-export type MetricKey =
-  "attackingOutput" | "possessionControl" | "defensiveDisruption";
-export type PlayerPosition =
-  "GK" | "CB" | "FB/WB" | "DM" | "CM" | "AM" | "W" | "ST";
+export type MetricKey = "points" | "goalsFor" | "goalDifference";
+export type PlayerPosition = "GK" | "DF" | "MF" | "FW";
 
 export interface TeamSeason {
   id: string;
   name: string;
+  nameJa: string;
   shortName: string;
+  rank: number;
   played: number;
+  wins: number;
+  draws: number;
+  losses: number;
   points: number;
   goalsFor: number;
   goalsAgainst: number;
@@ -23,11 +26,18 @@ export interface TeamSeason {
 export interface PlayerSeason {
   id: string;
   name: string;
+  nameJa: string;
   teamId: string;
   position: PlayerPosition;
   role: string;
   age: number;
   minutes: number;
+  appearances: number;
+  goals: number;
+  jerseyNumber: number;
+  birthDate: string;
+  heightCm: number | null;
+  weightKg: number | null;
   performance: number | null;
   potential: number | null;
   opportunity: number | null;
@@ -40,7 +50,7 @@ export interface LeagueDataset {
   season: 2025;
   snapshotDate: string;
   methodologyVersion: string;
-  sample: true;
+  sample: false;
   teams: TeamSeason[];
   players: PlayerSeason[];
 }
@@ -49,6 +59,13 @@ export interface LeagueStateRow {
   teamId: string;
   teamName: string;
   played: number;
+  rank: number;
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
   pointsPerMatch: number;
   goalDifferencePer90: number;
   expectedGoalDifferencePer90: number | null;
@@ -63,11 +80,7 @@ export interface TeamLandscapePoint {
   y: number;
   z: number;
   raw: Record<MetricKey, number>;
-  cluster:
-    | "Territorial controller"
-    | "Direct transition"
-    | "Defensive disruptor"
-    | "Compact pragmatist";
+  cluster: "Title race" | "Upper half" | "Mid-table" | "Relegation zone";
   coverage: number;
 }
 

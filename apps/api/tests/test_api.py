@@ -16,17 +16,17 @@ def test_health_and_overview() -> None:
         assert health.headers["cache-control"] == "no-store"
         overview = api.get("/api/v1/league/2025/overview")
         assert overview.status_code == 200
-        assert overview.json()["team_count"] == 12
-        assert overview.json()["player_count"] == 24
-        assert overview.json()["sample"] is True
+        assert overview.json()["team_count"] == 20
+        assert overview.json()["player_count"] == 772
+        assert overview.json()["sample"] is False
 
 
 def test_player_cursor_and_filters() -> None:
     with client() as api:
-        first = api.get("/api/v1/players", params={"position": "CB", "limit": 2}).json()
+        first = api.get("/api/v1/players", params={"position": "DF", "limit": 2}).json()
         assert len(first["items"]) == 2
         assert first["next_cursor"] is not None
-        second = api.get("/api/v1/players", params={"position": "CB", "limit": 2, "after_id": first["next_cursor"]}).json()
+        second = api.get("/api/v1/players", params={"position": "DF", "limit": 2, "after_id": first["next_cursor"]}).json()
         assert all(item["id"] > first["next_cursor"] for item in second["items"])
 
 

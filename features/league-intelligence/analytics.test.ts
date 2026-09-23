@@ -35,20 +35,13 @@ describe("league analytics", () => {
     expect(signals.every((item) => item.coverage >= 60)).toBe(true);
   });
 
-  it("keeps a partial team in league state but excludes it from a landscape requiring its missing axis", () => {
-    const missingTeam = sampleLeagueDataset.teams.find(
-      (team) => team.expectedGoals === null,
-    );
-    expect(missingTeam).toBeDefined();
-    expect(
-      buildLeagueState(sampleLeagueDataset).some(
-        (row) => row.teamId === missingTeam?.id,
-      ),
-    ).toBe(true);
-    expect(
-      buildTeamLandscape(sampleLeagueDataset, DEFAULT_AXES).some(
-        (point) => point.teamId === missingTeam?.id,
-      ),
-    ).toBe(false);
+  it("includes all 20 official clubs in the table and 3D landscape", () => {
+    expect(buildLeagueState(sampleLeagueDataset)).toHaveLength(20);
+    expect(buildTeamLandscape(sampleLeagueDataset, DEFAULT_AXES)).toHaveLength(20);
+    expect(buildLeagueState(sampleLeagueDataset)[0]).toMatchObject({
+      teamName: "Kashima Antlers",
+      points: 76,
+      rank: 1,
+    });
   });
 });

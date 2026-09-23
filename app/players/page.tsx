@@ -23,7 +23,7 @@ export default function PlayersPage() {
       .filter(
         (player) =>
           (position === "All" || player.position === position) &&
-          player.name.toLowerCase().includes(query.toLowerCase()),
+          `${player.name} ${player.nameJa}`.toLowerCase().includes(query.toLowerCase()),
       )
       .sort((a, b) => (scoreMap.get(b.id) ?? 0) - (scoreMap.get(a.id) ?? 0));
   }, [dataset, query, position]);
@@ -55,7 +55,7 @@ export default function PlayersPage() {
           className="rounded-lg border border-[var(--line)] bg-white px-4 text-sm"
         >
           <option>All</option>
-          {["GK", "CB", "FB/WB", "DM", "CM", "AM", "W", "ST"].map((item) => (
+          {["GK", "DF", "MF", "FW"].map((item) => (
             <option key={item}>{item}</option>
           ))}
         </select>
@@ -77,9 +77,10 @@ export default function PlayersPage() {
                 <th>Club</th>
                 <th>Pos</th>
                 <th>Age</th>
+                <th>Apps</th>
                 <th>Minutes</th>
-                <th>Performance</th>
-                <th>Opportunity</th>
+                <th>Goals</th>
+                <th>J-Scout involvement</th>
                 <th>Coverage</th>
               </tr>
             </thead>
@@ -106,12 +107,11 @@ export default function PlayersPage() {
                   </td>
                   <td>{player.position}</td>
                   <td>{player.age}</td>
+                  <td>{player.appearances}</td>
                   <td>{player.minutes.toLocaleString("en-US")}</td>
+                  <td>{player.goals}</td>
                   <td>
                     <ScoreBar value={player.performance} accent />
-                  </td>
-                  <td>
-                    <ScoreBar value={player.opportunity} />
                   </td>
                   <td>{player.coverage}%</td>
                 </tr>

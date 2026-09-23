@@ -17,7 +17,7 @@ const viewModel = buildLeagueDashboard(sampleLeagueDataset, {
 describe("decision-support modules", () => {
   it("shows cautious interpretation and evidence", () => {
     render(<PerformanceProcess items={viewModel.performanceProcess} />);
-    expect(screen.getByText(/within this sample/i)).toBeVisible();
+    expect(screen.getByText(/season-long scoring margin/i)).toBeVisible();
     expect(screen.getByText(/show evidence/i)).toBeVisible();
   });
 

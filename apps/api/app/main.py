@@ -44,7 +44,7 @@ def create_app(database_url: str | None = None, should_seed: bool | None = None)
         yield from database.session()
 
     def player_out(player: Player, season: PlayerSeason) -> PlayerOut:
-        return PlayerOut(id=player.id, source_player_id=player.source_player_id, name=player.name, club_id=player.club_id, club_name=player.club.name, age=2025 - player.birth_year, position=season.position, role=season.role, minutes=season.minutes, performance=season.performance, potential=season.potential, opportunity=season.opportunity, availability=season.availability, coverage=season.coverage)
+        return PlayerOut(id=player.id, source_player_id=player.source_player_id, name=player.name, name_ja=player.name_ja, club_id=player.club_id, club_name=player.club.name, age=2025 - player.birth_year, position=season.position, role=season.role, minutes=season.minutes, appearances=season.appearances, goals=season.goals, jersey_number=season.jersey_number, birth_date=player.birth_date, height_cm=player.height_cm, weight_kg=player.weight_kg, performance=season.performance, potential=season.potential, opportunity=season.opportunity, availability=season.availability, coverage=season.coverage)
 
     @app.get("/api/v1/health")
     def health(db: Session = Depends(get_db)):
@@ -59,12 +59,12 @@ def create_app(database_url: str | None = None, should_seed: bool | None = None)
             raise HTTPException(status_code=404, detail="J1 2025 dataset not found")
         team_stats = db.execute(select(func.count(ClubSeason.id), func.avg(ClubSeason.coverage), func.max(ClubSeason.snapshot_date)).where(ClubSeason.competition_id == competition.id, ClubSeason.season == 2025)).one()
         player_stats = db.execute(select(func.count(PlayerSeason.id), func.avg(PlayerSeason.coverage)).where(PlayerSeason.competition_id == competition.id, PlayerSeason.season == 2025)).one()
-        return OverviewOut(competition=competition.code, season=2025, snapshot_date=team_stats[2] or date(2025, 1, 1), methodology_version=methodology.version, sample=True, team_count=team_stats[0], player_count=player_stats[0], average_team_coverage=round(float(team_stats[1] or 0), 1), average_player_coverage=round(float(player_stats[1] or 0), 1))
+        return OverviewOut(competition=competition.code, season=2025, snapshot_date=team_stats[2] or date(2025, 1, 1), methodology_version=methodology.version, sample=False, team_count=team_stats[0], player_count=player_stats[0], average_team_coverage=round(float(team_stats[1] or 0), 1), average_player_coverage=round(float(player_stats[1] or 0), 1))
 
     @app.get("/api/v1/teams", response_model=list[TeamOut])
     def teams(season: int = 2025, db: Session = Depends(get_db)):
-        rows = db.execute(select(Club, ClubSeason).join(ClubSeason, ClubSeason.club_id == Club.id).where(ClubSeason.season == season).order_by(ClubSeason.points.desc())).all()
-        return [TeamOut(id=club.id, slug=club.slug, name=club.name, short_name=club.short_name, played=item.played, points=item.points, goals_for=item.goals_for, goals_against=item.goals_against, expected_goals=float(item.expected_goals) if item.expected_goals is not None else None, expected_goals_against=float(item.expected_goals_against) if item.expected_goals_against is not None else None, possession_pct=float(item.possession_pct) if item.possession_pct is not None else None, defensive_actions_per90=float(item.defensive_actions_per90) if item.defensive_actions_per90 is not None else None, consistency=item.consistency, coverage=item.coverage) for club, item in rows]
+        rows = db.execute(select(Club, ClubSeason).join(ClubSeason, ClubSeason.club_id == Club.id).where(ClubSeason.season == season).order_by(ClubSeason.rank)).all()
+        return [TeamOut(id=club.id, slug=club.slug, name=club.name, name_ja=club.name_ja, short_name=club.short_name, rank=item.rank, played=item.played, wins=item.wins, draws=item.draws, losses=item.losses, points=item.points, goals_for=item.goals_for, goals_against=item.goals_against, expected_goals=float(item.expected_goals) if item.expected_goals is not None else None, expected_goals_against=float(item.expected_goals_against) if item.expected_goals_against is not None else None, possession_pct=float(item.possession_pct) if item.possession_pct is not None else None, defensive_actions_per90=float(item.defensive_actions_per90) if item.defensive_actions_per90 is not None else None, consistency=item.consistency, coverage=item.coverage) for club, item in rows]
 
     def player_query(season: int, position: str | None, min_minutes: int, after_id: int | None):
         statement = select(Player, PlayerSeason).join(PlayerSeason).options(joinedload(Player.club)).where(PlayerSeason.season == season, PlayerSeason.minutes >= min_minutes)
@@ -104,7 +104,7 @@ def create_app(database_url: str | None = None, should_seed: bool | None = None)
         current = db.scalar(select(MethodologyVersion).order_by(MethodologyVersion.id.desc()))
         if not current:
             raise HTTPException(status_code=404, detail="methodology not found")
-        return {"version": current.version, "description": current.description, "formulas": {"per90": "raw_metric / minutes × 90", "reliability": "r × player + (1 − r) × group_mean", "moneyball": "weighted sum; weights must total 100"}, "limitations": ["Synthetic records only", "No event coordinates", "No market values", "Human review remains required"]}
+        return {"version": current.version, "description": current.description, "formulas": {"availability": "minutes / 3420 × 100", "involvement": "50% minutes share + 25% appearance share + 25% capped goal signal", "moneyball": "weighted sum of J-Scout derived scores; weights must total 100"}, "limitations": ["No event coordinates or xG", "No market values", "Derived scores are discovery aids, not scouting verdicts", "Human and video review remain required"]}
 
     @app.get("/api/v1/data-coverage", response_model=list[DataSourceOut])
     def data_coverage(db: Session = Depends(get_db)):

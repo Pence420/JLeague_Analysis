@@ -15,7 +15,7 @@ File penting:
 - `apps/api/app/main.py`: route dan dependency session;
 - `apps/api/app/schemas.py`: bentuk request/response;
 - `apps/api/app/models.py`: bentuk penyimpanan;
-- `apps/api/app/seed.py`: sample data deterministik.
+- `apps/api/app/seed.py`: seed deterministik dari snapshot resmi yang sudah direview.
 
 ## 2. Validasi Moneyball
 
@@ -36,7 +36,7 @@ Response ranking mengembalikan `components`, bukan hanya final score. Ini membua
 `GET /players` menerima `after_id` dan `limit`. Cursor lebih stabil daripada offset saat data bertambah di tengah sesi.
 
 ```text
-/api/v1/players?position=CB&limit=20&after_id=40
+/api/v1/players?position=DF&limit=20&after_id=40
 ```
 
 ## 4. Session per request

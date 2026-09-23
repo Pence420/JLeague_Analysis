@@ -1,5 +1,4 @@
 import type { LeagueStateRow } from "@/features/league-intelligence/types";
-import { MetricValue } from "@/components/ui/metric-value";
 
 export function LeagueState({
   rows,
@@ -17,7 +16,7 @@ export function LeagueState({
         <div>
           <p className="eyebrow">Competitive state</p>
           <h2 id="league-state-title" className="module-title">
-            League State
+            Final Table
           </h2>
         </div>
         <span className="text-xs text-[var(--ink-muted)]">J1 · 2025</span>
@@ -27,13 +26,13 @@ export function LeagueState({
           <thead className="text-[11px] uppercase tracking-wide text-[var(--ink-muted)]">
             <tr>
               <th className="pb-3">Club</th>
-              <th className="pb-3 text-right">PPM</th>
-              <th className="pb-3 text-right">GD/90</th>
-              <th className="pb-3 text-right">xGD/90</th>
+              <th className="pb-3 text-right">P</th>
+              <th className="pb-3 text-right">W-D-L</th>
+              <th className="pb-3 text-right">GD</th>
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 8).map((row, index) => (
+            {rows.map((row) => (
               <tr key={row.teamId} className="border-t border-[var(--line)]">
                 <td className="py-3">
                   <button
@@ -41,23 +40,20 @@ export function LeagueState({
                     className="text-left font-semibold hover:text-[var(--red)]"
                   >
                     <span className="mr-2 text-xs text-[var(--ink-muted)]">
-                      {String(index + 1).padStart(2, "0")}
+                      {String(row.rank).padStart(2, "0")}
                     </span>
                     {row.teamName}
                   </button>
                 </td>
                 <td className="py-3 text-right tabular-nums">
-                  {row.pointsPerMatch.toFixed(2)}
+                  {row.points}
                 </td>
                 <td className="py-3 text-right tabular-nums">
-                  {row.goalDifferencePer90.toFixed(2)}
+                  {row.wins}-{row.draws}-{row.losses}
                 </td>
                 <td className="py-3 text-right tabular-nums">
-                  <MetricValue
-                    value={row.expectedGoalDifferencePer90}
-                    format="decimal"
-                    label={`${row.teamName} expected goal difference`}
-                  />
+                  {row.goalsFor - row.goalsAgainst > 0 ? "+" : ""}
+                  {row.goalsFor - row.goalsAgainst}
                 </td>
               </tr>
             ))}

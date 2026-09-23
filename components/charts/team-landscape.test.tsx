@@ -6,14 +6,14 @@ import {
   DEFAULT_AXES,
 } from "@/features/league-intelligence/analytics";
 import { sampleLeagueDataset } from "@/features/league-intelligence/sample-data";
-import { TeamLandscape } from "./team-landscape-3d";
+import { TeamPerformanceChart } from "./team-performance-chart";
 
 const points = buildTeamLandscape(sampleLeagueDataset, DEFAULT_AXES);
 
-describe("TeamLandscape", () => {
-  it("renders complete HTML data when WebGL is unavailable", () => {
+describe("TeamPerformanceChart", () => {
+  it("renders all clubs as interactive bars and complete tabular data", () => {
     render(
-      <TeamLandscape
+      <TeamPerformanceChart
         points={points}
         axes={DEFAULT_AXES}
         selectedTeamId={null}
@@ -21,6 +21,9 @@ describe("TeamLandscape", () => {
         forceFallback
       />,
     );
+    expect(
+      screen.getAllByRole("button", { name: /Points$/i }),
+    ).toHaveLength(points.length);
     expect(screen.getByRole("table")).toBeVisible();
     expect(screen.getAllByRole("row")).toHaveLength(points.length + 1);
   });
@@ -29,7 +32,7 @@ describe("TeamLandscape", () => {
     const user = userEvent.setup();
     const onSelectTeam = vi.fn();
     render(
-      <TeamLandscape
+      <TeamPerformanceChart
         points={points}
         axes={DEFAULT_AXES}
         selectedTeamId={null}
@@ -43,7 +46,7 @@ describe("TeamLandscape", () => {
 
   it("describes all selected axes", () => {
     render(
-      <TeamLandscape
+      <TeamPerformanceChart
         points={points}
         axes={DEFAULT_AXES}
         selectedTeamId={points[0].teamId}
@@ -53,8 +56,27 @@ describe("TeamLandscape", () => {
     );
     expect(
       screen.getByText(
-        /attacking output, possession control, and defensive disruption/i,
+        /points, goals scored, and goal difference/i,
       ),
     ).toBeVisible();
+  });
+
+  it("selects a club directly from the chart", async () => {
+    const user = userEvent.setup();
+    const onSelectTeam = vi.fn();
+    render(
+      <TeamPerformanceChart
+        points={points}
+        axes={DEFAULT_AXES}
+        selectedTeamId={null}
+        onSelectTeam={onSelectTeam}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: `${points[0].teamName}: ${points[0].raw.points} Points`,
+      }),
+    );
+    expect(onSelectTeam).toHaveBeenCalledWith(points[0].teamId);
   });
 });

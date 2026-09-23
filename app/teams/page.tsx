@@ -21,7 +21,7 @@ export default function TeamsPage() {
   return (
     <PageFrame
       title="Teams"
-      description="Compare J1 2025 club performance, playing style and data coverage."
+      description="Inspect the complete official final table for all 20 J1 clubs."
     >
       <div className="mb-3 flex flex-wrap gap-2">
         <input
@@ -31,9 +31,6 @@ export default function TeamsPage() {
           placeholder="Search clubs"
           className="min-w-64 rounded-lg border border-[var(--line)] bg-white px-4 py-2.5 text-sm"
         />
-        <select className="rounded-lg border border-[var(--line)] bg-white px-4 text-sm">
-          <option>All playing styles</option>
-        </select>
       </div>
       <div className="grid gap-3 lg:grid-cols-[1fr_360px]">
         <section className="overflow-hidden rounded-xl border border-[var(--line)] bg-white">
@@ -42,10 +39,11 @@ export default function TeamsPage() {
               <tr>
                 <th className="px-4 py-3">#</th>
                 <th>Club</th>
-                <th>Style</th>
-                <th>PPM</th>
-                <th>Squad signal</th>
-                <th>Coverage</th>
+                <th>W-D-L</th>
+                <th>GF</th>
+                <th>GA</th>
+                <th>GD</th>
+                <th>Pts</th>
               </tr>
             </thead>
             <tbody>
@@ -59,21 +57,11 @@ export default function TeamsPage() {
                     {index + 1}
                   </td>
                   <td className="font-semibold">{team.name}</td>
-                  <td>
-                    {team.possessionPct !== null && team.possessionPct > 52
-                      ? "Possession"
-                      : team.defensiveActionsPer90 !== null &&
-                          team.defensiveActionsPer90 > 20
-                        ? "High pressure"
-                        : "Balanced"}
-                  </td>
-                  <td className="tabular-nums">
-                    {(team.points / team.played).toFixed(2)}
-                  </td>
-                  <td>
-                    <ScoreBar value={team.consistency} />
-                  </td>
-                  <td>{team.coverage}%</td>
+                  <td className="tabular-nums">{team.wins}-{team.draws}-{team.losses}</td>
+                  <td>{team.goalsFor}</td>
+                  <td>{team.goalsAgainst}</td>
+                  <td>{team.goalsFor - team.goalsAgainst > 0 ? "+" : ""}{team.goalsFor - team.goalsAgainst}</td>
+                  <td className="font-semibold">{team.points}</td>
                 </tr>
               ))}
             </tbody>
@@ -89,56 +77,32 @@ export default function TeamsPage() {
                 <dd className="mt-1 text-2xl">{selected.points}</dd>
               </div>
               <div>
-                <dt className="text-xs text-[var(--ink-muted)]">Possession</dt>
-                <dd className="mt-1 text-2xl">
-                  {selected.possessionPct ?? "—"}
-                </dd>
+                <dt className="text-xs text-[var(--ink-muted)]">Final rank</dt>
+                <dd className="mt-1 text-2xl">{selected.rank}</dd>
               </div>
               <div>
                 <dt className="text-xs text-[var(--ink-muted)]">Coverage</dt>
                 <dd className="mt-1 text-2xl">{selected.coverage}%</dd>
               </div>
             </dl>
-            <h3 className="mt-6 font-semibold">Profile</h3>
+            <h3 className="mt-6 font-semibold">Season record</h3>
             <div className="mt-4 space-y-4">
               <div>
-                <span className="text-sm">Attack</span>
-                <ScoreBar
-                  value={Math.round(
-                    ((selected.expectedGoals ?? selected.goalsFor) /
-                      selected.played) *
-                      50,
-                  )}
-                  accent
-                />
+                <span className="text-sm">Goals scored · {selected.goalsFor}</span>
+                <ScoreBar value={Math.round(selected.goalsFor / Math.max(...dataset.teams.map((team) => team.goalsFor)) * 100)} accent />
               </div>
               <div>
-                <span className="text-sm">Control</span>
-                <ScoreBar
-                  value={
-                    selected.possessionPct === null
-                      ? null
-                      : Math.round(selected.possessionPct)
-                  }
-                />
+                <span className="text-sm">Points · {selected.points}</span>
+                <ScoreBar value={Math.round(selected.points / 76 * 100)} />
               </div>
               <div>
-                <span className="text-sm">Disruption</span>
-                <ScoreBar
-                  value={
-                    selected.defensiveActionsPer90 === null
-                      ? null
-                      : Math.min(
-                          100,
-                          Math.round(selected.defensiveActionsPer90 * 4),
-                        )
-                  }
-                />
+                <span className="text-sm">Defensive record · {selected.goalsAgainst} conceded</span>
+                <ScoreBar value={Math.round((1 - selected.goalsAgainst / Math.max(...dataset.teams.map((team) => team.goalsAgainst))) * 100)} />
               </div>
             </div>
             <p className="mt-6 border-t border-[var(--line)] pt-5 text-sm leading-6 text-[var(--ink-muted)]">
-              Synthetic sample profile. Use this view to choose which club
-              deserves deeper tactical review.
+              Official final results describe outcomes. Tactical causes still
+              require event data and video review.
             </p>
           </aside>
         )}

@@ -11,8 +11,13 @@ class TeamOut(ApiModel):
     id: int
     slug: str
     name: str
+    name_ja: str
     short_name: str
+    rank: int
     played: int
+    wins: int
+    draws: int
+    losses: int
     points: int
     goals_for: int
     goals_against: int
@@ -28,12 +33,19 @@ class PlayerOut(ApiModel):
     id: int
     source_player_id: str
     name: str
+    name_ja: str
     club_id: int
     club_name: str
     age: int
     position: str
     role: str
     minutes: int
+    appearances: int
+    goals: int
+    jersey_number: int
+    birth_date: date | None
+    height_cm: int | None
+    weight_kg: int | None
     performance: int | None
     potential: int | None
     opportunity: int | None

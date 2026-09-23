@@ -1,8 +1,8 @@
 # J-Scout
 
-J-Scout adalah dashboard recruitment intelligence J1 dengan frontend Next.js dan backend FastAPI. Produk ini menyatukan overview liga, profil tim, player explorer, transparent Moneyball ranking, comparison, methodology, dan visualisasi team-style 3D.
+J-Scout adalah dashboard recruitment intelligence J1 dengan frontend Next.js dan backend FastAPI. Produk ini menyatukan overview liga, profil tim, player explorer, transparent Moneyball ranking, comparison, methodology, dan visualisasi final table 3D.
 
-> Seluruh klub, pemain, dan statistik saat ini adalah **synthetic sample data**. Hasilnya adalah sinyal decision-support, bukan prediksi, jaminan, atau pengganti scouting profesional.
+> Snapshot berisi 20 klub dan 772 catatan pemain-klub asli J1 2025 dari J.LEAGUE Data Site. Skor J-Scout adalah turunan transparan, bukan prediksi, valuasi, atau pengganti scouting profesional.
 
 ## Menjalankan full stack
 
@@ -51,7 +51,9 @@ npm run api:test
 app/                              Next.js routes
 components/                       App shell, dashboard modules, charts
 features/api/                     Adapter kontrak FastAPI → domain frontend
-features/league-intelligence/     Types, Zod validation, analytics, fallback data
+features/league-intelligence/     Types, Zod validation, analytics, snapshot adapter
+data/jleague/2025.json            Immutable official-data snapshot
+scripts/import_jleague_2025.py    Repeatable official-source importer
 apps/api/app/                     FastAPI, SQLAlchemy models, seed, endpoints
 apps/api/alembic/                 PostgreSQL migrations
 apps/api/tests/                   Backend contract and scoring tests
@@ -78,5 +80,6 @@ Mulai dari [01 app shell](docs/learning/01-app-shell-and-island-navigation.md), 
 - [08 — FastAPI contracts](docs/learning/08-fastapi-contracts.md)
 - [09 — PostgreSQL dan migration](docs/learning/09-postgresql-and-migrations.md)
 - [10 — Frontend API adapter](docs/learning/10-frontend-api-adapter.md)
+- [11 — Import data resmi J1 2025](docs/learning/11-official-jleague-data-import.md)
 
-Referensi visual redesign tersedia di `docs/design/redesign/`. Implementasi sengaja memakai identitas fiktif dan memperbaiki artefak gambar yang tidak layak dijadikan data.
+Referensi visual redesign tersedia di `docs/design/redesign/`. Identitas dan hasil pertandingan memakai snapshot resmi; bentuk visual tetap merupakan desain J-Scout sendiri.

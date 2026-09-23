@@ -6,9 +6,9 @@ import type {
 } from "@/features/league-intelligence/types";
 
 export const metricLabels: Record<MetricKey, string> = {
-  attackingOutput: "Attacking output",
-  possessionControl: "Possession control",
-  defensiveDisruption: "Defensive disruption",
+  points: "Points",
+  goalsFor: "Goals scored",
+  goalDifference: "Goal difference",
 };
 
 export function TeamLandscapeFallback({
@@ -35,7 +35,7 @@ export function TeamLandscapeFallback({
       </summary>
       <div className="border-t border-[var(--line)] p-4">
         <p className="max-w-3xl text-sm leading-6 text-[var(--ink-muted)]">
-          This view compares {metricLabels[axes[0]]}, {metricLabels[axes[1]]},
+          This view compares official {metricLabels[axes[0]]}, {metricLabels[axes[1]]},
           and {metricLabels[axes[2]]}.{" "}
           {selected
             ? `${selected.teamName} is classified as ${selected.cluster.toLowerCase()}.`
@@ -76,9 +76,7 @@ export function TeamLandscapeFallback({
                   </td>
                   {axes.map((axis) => (
                     <td className="py-3 text-right tabular-nums" key={axis}>
-                      {point.raw[axis].toFixed(
-                        axis === "possessionControl" ? 1 : 2,
-                      )}
+                      {point.raw[axis]}
                     </td>
                   ))}
                   <td className="py-3">{point.cluster}</td>

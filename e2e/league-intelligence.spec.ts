@@ -25,30 +25,30 @@ test("every primary destination loads instead of falling into 404", async ({
   }
 });
 
-test("league overview keeps evidence and backend provenance visible", async ({
+test("league overview keeps evidence and league distribution visible", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText(/synthetic sample/i).first()).toBeVisible();
+  await expect(page.getByText("2025-12-06").first()).toBeVisible();
   await expect(
-    page.getByText(/API connected|local fallback/).first(),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Team Style Landscape" }),
+    page.getByRole("heading", { name: "J1 2025 club performance" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Analyst Brief" }),
   ).toBeVisible();
-  await expect(page.getByText(/not for recruitment decisions/i)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "League distribution" }),
+  ).toBeVisible();
+  await expect(page.getByText(/derived scores are labeled/i)).toBeVisible();
 });
 
 test("core player and moneyball interactions work", async ({ page }) => {
   await page.goto("/players");
-  await page.getByLabel("Search players").fill("Ren");
+  await page.getByLabel("Search players").fill("Hayakawa");
   await expect(
-    page.getByRole("cell", { name: "Ren Amano", exact: true }),
+    page.getByRole("cell", { name: "HAYAKAWA Tomoki", exact: true }),
   ).toBeVisible();
-  await page.getByLabel("Select Ren Amano").check();
+  await page.getByLabel("Select HAYAKAWA Tomoki").check();
   await expect(page.getByText("Compare (1)")).toBeVisible();
 
   await page.goto("/moneyball");

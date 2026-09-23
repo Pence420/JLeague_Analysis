@@ -12,11 +12,7 @@ import type {
   TeamSeason,
 } from "./types";
 
-export const DEFAULT_AXES = [
-  "attackingOutput",
-  "possessionControl",
-  "defensiveDisruption",
-] as const;
+export const DEFAULT_AXES = ["points", "goalsFor", "goalDifference"] as const;
 
 export function per90(value: number | null, minutes: number): number | null {
   return value === null || minutes <= 0 ? null : (value / minutes) * 90;
@@ -38,13 +34,10 @@ export function confidenceFromCoverage(coverage: number): Confidence {
   return "low";
 }
 
-function teamMetric(team: TeamSeason, key: MetricKey): number | null {
-  if (key === "attackingOutput")
-    return team.expectedGoals === null
-      ? null
-      : team.expectedGoals / team.played;
-  if (key === "possessionControl") return team.possessionPct;
-  return team.defensiveActionsPer90;
+function teamMetric(team: TeamSeason, key: MetricKey): number {
+  if (key === "points") return team.points;
+  if (key === "goalsFor") return team.goalsFor;
+  return team.goalsFor - team.goalsAgainst;
 }
 
 function normalize(value: number, values: number[]): number {
@@ -59,45 +52,41 @@ export function buildLeagueState(dataset: LeagueDataset): LeagueStateRow[] {
       teamId: team.id,
       teamName: team.name,
       played: team.played,
+      rank: team.rank,
+      points: team.points,
+      wins: team.wins,
+      draws: team.draws,
+      losses: team.losses,
+      goalsFor: team.goalsFor,
+      goalsAgainst: team.goalsAgainst,
       pointsPerMatch: team.points / team.played,
       goalDifferencePer90: (team.goalsFor - team.goalsAgainst) / team.played,
-      expectedGoalDifferencePer90:
-        team.expectedGoals === null || team.expectedGoalsAgainst === null
-          ? null
-          : (team.expectedGoals - team.expectedGoalsAgainst) / team.played,
+      expectedGoalDifferencePer90: null,
       coverage: team.coverage,
     }))
-    .sort(
-      (a, b) =>
-        b.pointsPerMatch - a.pointsPerMatch || a.teamId.localeCompare(b.teamId),
-    );
+    .sort((a, b) => a.rank - b.rank);
 }
 
 export function buildTeamLandscape(
   dataset: LeagueDataset,
   axes: readonly [MetricKey, MetricKey, MetricKey],
 ): TeamLandscapePoint[] {
-  const complete = dataset.teams.filter((team) =>
-    axes.every((axis) => teamMetric(team, axis) !== null),
-  );
   const valuesByAxis = axes.map((axis) =>
-    complete.map((team) => teamMetric(team, axis) as number),
+    dataset.teams.map((team) => teamMetric(team, axis)),
   );
-  return complete.map((team) => {
+  return dataset.teams.map((team) => {
     const raw = Object.fromEntries(
-      DEFAULT_AXES.map((key) => [key, teamMetric(team, key) ?? 0]),
+      DEFAULT_AXES.map((key) => [key, teamMetric(team, key)]),
     ) as Record<MetricKey, number>;
-    const [xValue, yValue, zValue] = axes.map(
-      (axis) => teamMetric(team, axis) as number,
-    );
+    const [xValue, yValue, zValue] = axes.map((axis) => teamMetric(team, axis));
     const cluster =
-      raw.possessionControl >= 53 && raw.attackingOutput >= 1.25
-        ? "Territorial controller"
-        : raw.defensiveDisruption >= 20
-          ? "Defensive disruptor"
-          : raw.attackingOutput >= 1.25
-            ? "Direct transition"
-            : "Compact pragmatist";
+      team.rank <= 3
+        ? "Title race"
+        : team.rank <= 10
+          ? "Upper half"
+          : team.rank <= 17
+            ? "Mid-table"
+            : "Relegation zone";
     return {
       teamId: team.id,
       teamName: team.name,
@@ -112,74 +101,52 @@ export function buildTeamLandscape(
   });
 }
 
-export function buildPerformanceProcess(
-  dataset: LeagueDataset,
-): EvidenceItem[] {
-  return dataset.teams
-    .filter((team) => team.expectedGoals !== null)
-    .map((team) => ({
-      team,
-      gap: (team.goalsFor - (team.expectedGoals as number)) / team.played,
-    }))
-    .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))
-    .slice(0, 3)
-    .map(({ team, gap }) => ({
-      id: `process-${team.id}`,
-      title: `${team.name}: ${gap >= 0 ? "finishing ahead of process" : "output trails chance quality"}`,
-      observation: `${team.name} has a ${Math.abs(gap).toFixed(2)} goals-per-match gap between actual and expected output.`,
-      interpretation: `${gap >= 0 ? "Finishing has amplified results" : "Created chances have not fully converted"} within this sample; this is an indicator, not a forecast.`,
-      evidence: [
-        { label: "Goals", value: String(team.goalsFor) },
-        {
-          label: "Expected goals",
-          value: formatMetric(team.expectedGoals, "decimal"),
-        },
-      ],
-      confidence: confidenceFromCoverage(team.coverage),
-      coverage: team.coverage,
-      limitation:
-        "Opponent strength and game state are not adjusted in this sample.",
-      tone: gap >= 0 ? "positive" : "caution",
-    }));
-}
-
-export function buildSustainabilityWatch(
-  dataset: LeagueDataset,
-): EvidenceItem[] {
-  return dataset.teams
-    .filter((team) => team.consistency !== null)
-    .map((team) => ({
-      team,
-      process:
-        team.expectedGoals === null
-          ? 0
-          : (team.expectedGoals - (team.expectedGoalsAgainst ?? 0)) /
-            team.played,
-    }))
+export function buildPerformanceProcess(dataset: LeagueDataset): EvidenceItem[] {
+  return [...dataset.teams]
     .sort(
       (a, b) =>
-        (b.team.consistency ?? 0) +
-        b.process * 10 -
-        ((a.team.consistency ?? 0) + a.process * 10),
+        b.goalsFor - b.goalsAgainst - (a.goalsFor - a.goalsAgainst) ||
+        a.rank - b.rank,
     )
     .slice(0, 3)
-    .map(({ team, process }) => ({
-      id: `sustainability-${team.id}`,
-      title: `${team.name} · ${process >= 0 ? "supported" : "fragile"} trend`,
-      observation: `Consistency is ${formatMetric(team.consistency, "percent")} with an underlying balance of ${process >= 0 ? "+" : ""}${process.toFixed(2)} per match.`,
-      interpretation: `${process >= 0 ? "Results have supporting process signals" : "Results lack supporting process signals"} within this sample.`,
+    .map((team) => {
+      const goalDifference = team.goalsFor - team.goalsAgainst;
+      return {
+        id: `balance-${team.id}`,
+        title: `${team.name}: strongest final goal balance`,
+        observation: `${team.goalsFor} scored and ${team.goalsAgainst} conceded produced a ${goalDifference >= 0 ? "+" : ""}${goalDifference} goal difference.`,
+        interpretation:
+          "The season-long scoring margin supports the final standing, but does not isolate schedule or game-state effects.",
+        evidence: [
+          { label: "Goals for", value: String(team.goalsFor) },
+          { label: "Goals against", value: String(team.goalsAgainst) },
+        ],
+        confidence: "high" as const,
+        coverage: team.coverage,
+        limitation: "No event-level xG or opponent-strength adjustment is included.",
+        tone: "positive" as const,
+      };
+    });
+}
+
+export function buildSustainabilityWatch(dataset: LeagueDataset): EvidenceItem[] {
+  return [...dataset.teams]
+    .sort((a, b) => a.goalsAgainst - b.goalsAgainst || a.rank - b.rank)
+    .slice(0, 3)
+    .map((team) => ({
+      id: `defence-${team.id}`,
+      title: `${team.name}: defensive platform`,
+      observation: `${team.goalsAgainst} goals conceded in ${team.played} league matches (${(team.goalsAgainst / team.played).toFixed(2)} per match).`,
+      interpretation:
+        "Low goals conceded is a durable season outcome, though it cannot separate goalkeeper, defending and opponent finishing effects.",
       evidence: [
-        {
-          label: "Consistency",
-          value: formatMetric(team.consistency, "percent"),
-        },
-        { label: "xG balance / match", value: process.toFixed(2) },
+        { label: "Conceded", value: String(team.goalsAgainst) },
+        { label: "Per match", value: (team.goalsAgainst / team.played).toFixed(2) },
       ],
-      confidence: confidenceFromCoverage(team.coverage),
+      confidence: "high" as const,
       coverage: team.coverage,
-      limitation:
-        "The sample does not model injuries, schedule difficulty, or tactical changes.",
-      tone: process >= 0 ? "positive" : "caution",
+      limitation: "Chance quality and shot locations are unavailable in this snapshot.",
+      tone: "neutral" as const,
     }));
 }
 
@@ -214,39 +181,37 @@ export function buildRecruitmentSignals(
           [player.opportunity, 0.2],
           [player.availability, 0.1],
         ]) ?? 0;
-      const reasons = [
-        `Performance signal ${formatMetric(player.performance, "integer")}/100`,
-        `Opportunity signal ${formatMetric(player.opportunity, "integer")}/100`,
-      ];
       return {
         playerId: player.id,
         playerName: player.name,
-        teamName: teamNames.get(player.teamId) ?? "Unknown sample club",
+        teamName: teamNames.get(player.teamId) ?? "Unknown club",
         position: player.position,
         role: player.role,
         age: player.age,
         minutes: player.minutes,
         score: Math.round(score),
-        reasons,
+        reasons: [
+          `${player.appearances} league appearances`,
+          `${player.goals} goals in ${player.minutes.toLocaleString("en-US")} minutes`,
+        ],
         risk:
-          player.age <= 21
-            ? "Development sample remains short."
-            : "No market-value source is available.",
+          "J-Scout score is derived from appearances, minutes, goals and age—not a scouting verdict.",
         coverage: player.coverage,
         confidence: confidenceFromCoverage(player.coverage),
       };
     })
-    .sort((a, b) => b.score - a.score || a.playerId.localeCompare(b.playerId))
-    .slice(0, 5);
+    .sort(
+      (a, b) =>
+        b.score - a.score || b.minutes - a.minutes || a.playerId.localeCompare(b.playerId),
+    )
+    .slice(0, 8);
 }
 
 export function buildRoleSupply(dataset: LeagueDataset): RoleSupply[] {
   const counts = new Map<string, number>();
-  dataset.players
-    .filter((player) => player.minutes >= 450)
-    .forEach((player) =>
-      counts.set(player.role, (counts.get(player.role) ?? 0) + 1),
-    );
+  dataset.players.forEach((player) =>
+    counts.set(player.role, (counts.get(player.role) ?? 0) + 1),
+  );
   const maximum = Math.max(...counts.values());
   return [...counts.entries()]
     .map(([role, count]) => ({
@@ -254,38 +219,71 @@ export function buildRoleSupply(dataset: LeagueDataset): RoleSupply[] {
       count,
       share: Math.round((count / maximum) * 100),
       status:
-        count <= 2
+        count < maximum * 0.5
           ? ("scarce" as const)
-          : count >= 4
+          : count === maximum
             ? ("abundant" as const)
             : ("balanced" as const),
     }))
-    .sort((a, b) => a.count - b.count || a.role.localeCompare(b.role));
+    .sort((a, b) => b.count - a.count);
 }
 
 export function buildAnalystBrief(dataset: LeagueDataset): AnalystFinding[] {
-  const process = buildPerformanceProcess(dataset)[0];
-  const sustainability = buildSustainabilityWatch(dataset)[0];
-  const leader = buildLeagueState(dataset)[0];
-  const leagueFinding: EvidenceItem = {
-    id: `leader-${leader.teamId}`,
-    title: `${leader.teamName} sets the current competitive benchmark`,
-    observation: `${leader.teamName} leads this sample at ${leader.pointsPerMatch.toFixed(2)} points per match.`,
-    interpretation:
-      "The lead is supported by positive goal balance, but remains descriptive rather than predictive.",
-    evidence: [
-      { label: "Points / match", value: leader.pointsPerMatch.toFixed(2) },
-      {
-        label: "Goal difference / 90",
-        value: leader.goalDifferencePer90.toFixed(2),
-      },
-    ],
-    confidence: confidenceFromCoverage(leader.coverage),
-    coverage: leader.coverage,
-    limitation: "League strength and schedule difficulty are not adjusted.",
-    tone: "positive",
-  };
-  return [leagueFinding, process, sustainability].map((finding, index) => ({
+  const [champion, runnerUp] = [...dataset.teams].sort((a, b) => a.rank - b.rank);
+  const bestAttack = [...dataset.teams].sort(
+    (a, b) => b.goalsFor - a.goalsFor || a.rank - b.rank,
+  )[0];
+  const bestDefence = [...dataset.teams].sort(
+    (a, b) => a.goalsAgainst - b.goalsAgainst || a.rank - b.rank,
+  )[0];
+  const findings: EvidenceItem[] = [
+    {
+      id: "title-margin",
+      title: `${champion.name} won a one-point title race`,
+      observation: `${champion.points} points finished just ${champion.points - runnerUp.points} ahead of ${runnerUp.name}.`,
+      interpretation:
+        "The championship margin was extremely narrow: one additional draw or defeat could have reversed the top two.",
+      evidence: [
+        { label: "Champion points", value: String(champion.points) },
+        { label: "Runner-up points", value: String(runnerUp.points) },
+      ],
+      confidence: "high",
+      coverage: 100,
+      limitation: "Final-table evidence describes the outcome, not causal match dynamics.",
+      tone: "positive",
+    },
+    {
+      id: "best-attack",
+      title: `${bestAttack.name} produced the league's highest scoring output`,
+      observation: `${bestAttack.goalsFor} goals across ${bestAttack.played} matches (${(bestAttack.goalsFor / bestAttack.played).toFixed(2)} per match).`,
+      interpretation:
+        "Raw scoring volume identifies attacking output; shot quality and game state require separate video or event-data review.",
+      evidence: [
+        { label: "Goals", value: String(bestAttack.goalsFor) },
+        { label: "Final rank", value: String(bestAttack.rank) },
+      ],
+      confidence: "high",
+      coverage: 100,
+      limitation: "No xG or shot-location data is included.",
+      tone: "neutral",
+    },
+    {
+      id: "best-defence",
+      title: `${bestDefence.name} finished with the fewest goals conceded`,
+      observation: `${bestDefence.goalsAgainst} conceded, or ${(bestDefence.goalsAgainst / bestDefence.played).toFixed(2)} per match.`,
+      interpretation:
+        "The defensive record is strong outcome evidence, but should not be assigned to individuals without event and video context.",
+      evidence: [
+        { label: "Conceded", value: String(bestDefence.goalsAgainst) },
+        { label: "Goal difference", value: String(bestDefence.goalsFor - bestDefence.goalsAgainst) },
+      ],
+      confidence: "high",
+      coverage: 100,
+      limitation: "Goalkeeping and defensive contributions are not decomposed.",
+      tone: "neutral",
+    },
+  ];
+  return findings.map((finding, index) => ({
     ...finding,
     rank: (index + 1) as 1 | 2 | 3,
   }));
@@ -298,13 +296,6 @@ export function buildLeagueDashboard(
     axes: readonly [MetricKey, MetricKey, MetricKey];
   },
 ): LeagueDashboardViewModel {
-  const nullableTeamValues = dataset.teams.flatMap((team) => [
-    team.expectedGoals,
-    team.expectedGoalsAgainst,
-    team.possessionPct,
-    team.defensiveActionsPer90,
-    team.consistency,
-  ]);
   return {
     leagueState: buildLeagueState(dataset),
     landscape: buildTeamLandscape(dataset, options.axes),
@@ -318,7 +309,6 @@ export function buildLeagueDashboard(
     averageCoverage:
       dataset.teams.reduce((sum, team) => sum + team.coverage, 0) /
       dataset.teams.length,
-    missingMetricCount: nullableTeamValues.filter((value) => value === null)
-      .length,
+    missingMetricCount: 0,
   };
 }

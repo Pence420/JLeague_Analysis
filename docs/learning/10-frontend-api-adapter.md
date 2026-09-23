@@ -20,12 +20,12 @@ TypeScript hilang saat runtime. Karena itu hasil mapping tetap masuk ke `leagueD
 
 ## 3. Fallback yang jujur
 
-`useLeagueDataset()` mulai dari fixture lokal, mencoba API, lalu mengganti dataset ketika request berhasil. Hook yang sama dipakai League, Teams, Players, Moneyball, dan Compare supaya seluruh workflow membaca kontrak yang konsisten. UI overview selalu menampilkan sumber:
+`useLeagueDataset()` mulai dari snapshot resmi lokal, mencoba API, lalu mengganti dataset ketika request berhasil. Hook yang sama dipakai League, Teams, Players, Moneyball, dan Compare supaya seluruh workflow membaca kontrak yang konsisten. UI overview selalu menampilkan sumber:
 
 - `API connected`; atau
 - `local fallback`.
 
-Fallback tidak boleh diam-diam terlihat seperti data produksi. Label sumber adalah bagian dari integritas analisis.
+Fallback dan API membaca snapshot yang sama, tetapi label sumber tetap ditampilkan agar pengguna tahu jalur data yang sedang aktif.
 
 ## 4. Abort request saat component dibongkar
 
