@@ -7,10 +7,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "J-Scout — J1 League Intelligence",
   description:
-    "Explainable J1 League scouting analytics built from clearly labeled sample data.",
+    "Auditable J1 League recruitment intelligence built from official 2025 standings and player records.",
   openGraph: {
     title: "J-Scout — J1 League Intelligence",
-    description: "Evidence-led, transparent football recruitment analysis.",
+    description:
+      "Evidence-led football analysis with official facts, labeled derivations, and explicit source boundaries.",
     type: "website",
     images: ["/og/j-scout-league-intelligence.png"],
   },

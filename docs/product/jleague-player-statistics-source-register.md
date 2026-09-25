@@ -32,7 +32,8 @@ The official business-services page provides the correct route for asking about 
 - Keep `data/jleague/metric-catalog.json` as a metadata-only description of the intended official fields.
 - Commit minimal, hand-reviewed HTML fixtures containing only enough altered or synthetic rows to verify parsing behavior.
 - Test zero values, percentages, missing leaderboard entries, duplicate names, and transfer identity handling.
-- Build database tables, API contracts, score calculations, and UI states using synthetic values.
+- Build database tables, API contracts, advanced-metric score tests, and gated UI states using synthetic fixtures.
+- Derive and display clearly labeled Opportunity, Age development, Availability, and Data confidence components from the separately approved official appearance snapshot; do not treat them as advanced J STATS metrics.
 - Show a clear `Official data unavailable` or `Not listed in official top 200` state rather than inventing a number.
 
 ## Not allowed while status is `research_only`

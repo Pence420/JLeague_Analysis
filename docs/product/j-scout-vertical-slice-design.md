@@ -4,6 +4,8 @@
 **Status:** Historical approved design  
 **Scope:** Frontend-first vertical slice for the J-Scout home/league intelligence experience
 
+> This document records the initial synthetic-data prototype. The current product uses a frozen official J.LEAGUE 2025 standings and player-appearance snapshot. References to synthetic data below are retained only to document the original design stage; current source rules live in the root README and source register.
+
 ## 1. Intent
 
 Build a portfolio-grade J1 League scouting dashboard that feels like a professional recruitment workspace rather than a betting product. The first slice must establish the visual system, application shell, analytical depth, interaction model, and documentation style that later pages will reuse.
