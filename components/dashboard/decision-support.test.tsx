@@ -21,20 +21,12 @@ describe("decision-support modules", () => {
     expect(screen.getByText(/show evidence/i)).toBeVisible();
   });
 
-  it("shows reasons, risk, coverage, and confidence for recruitment signals", () => {
-    render(<RecruitmentSignals items={[viewModel.recruitmentSignals[0]]} />);
-    expect(
-      screen.getByText(viewModel.recruitmentSignals[0].risk),
-    ).toBeVisible();
-    expect(screen.getByText(/coverage/i)).toBeVisible();
-    expect(
-      screen.getByText(
-        new RegExp(
-          `${viewModel.recruitmentSignals[0].confidence} confidence`,
-          "i",
-        ),
-      ),
-    ).toBeVisible();
+  it("shows partial screening without inventing official role metrics", () => {
+    render(<RecruitmentSignals items={viewModel.recruitmentSignals} />);
+    expect(screen.getByText("Recruitment Value Proxy")).toBeVisible();
+    expect(screen.getByText(/partial screening available/i)).toBeVisible();
+    expect(screen.getByText(/not a transfer valuation/i)).toBeVisible();
+    expect(screen.getByText(/data confidence/i)).toBeVisible();
   });
 
   it("renders exactly three ranked analyst findings", () => {

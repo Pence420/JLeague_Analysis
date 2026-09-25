@@ -30,16 +30,44 @@ def test_player_cursor_and_filters() -> None:
         assert all(item["id"] > first["next_cursor"] for item in second["items"])
 
 
-def test_moneyball_ranking_is_transparent_and_validated() -> None:
+def test_recruitment_ranking_is_transparent_and_validated() -> None:
     with client() as api:
-        response = api.post("/api/v1/moneyball/rank", json={"weights": {"performance": 45, "potential": 25, "opportunity": 20, "availability": 10}, "minimum_minutes": 900, "minimum_coverage": 60, "limit": 5})
+        response = api.post("/api/v1/recruitment/rank", json={"weights": {"role_performance": 50, "opportunity": 20, "development": 15, "availability": 10, "confidence": 5}, "minimum_minutes": 900, "limit": 5})
         assert response.status_code == 200
         rows = response.json()
-        assert len(rows) == 5
-        assert rows == sorted(rows, key=lambda row: row["score"], reverse=True)
-        assert set(rows[0]["components"]) == {"performance", "potential", "opportunity", "availability"}
-        invalid = api.post("/api/v1/moneyball/rank", json={"weights": {"performance": 50, "potential": 25, "opportunity": 20, "availability": 10}})
+        assert rows == []  # Official advanced values remain gated; the API must not invent scores.
+        invalid = api.post("/api/v1/recruitment/rank", json={"weights": {"role_performance": 60, "opportunity": 20, "development": 15, "availability": 10, "confidence": 5}})
         assert invalid.status_code == 422
+
+        compatibility = api.post("/api/v1/moneyball/rank", json={})
+        assert compatibility.status_code == 200
+        assert compatibility.headers["deprecation"] == "true"
+        assert compatibility.headers["link"].endswith('rel="successor-version"')
+
+
+def test_player_contract_separates_official_and_derived() -> None:
+    with client() as api:
+        player = api.get("/api/v1/players", params={"limit": 1}).json()["items"][0]
+        assert "official_metrics" in player
+        assert "derived_scores" in player
+        assert set(player["official_metrics"]).isdisjoint(player["derived_scores"])
+        assert player["derived_scores"]["status"] == "not_scored"
+        assert player["derived_scores"]["role_performance"] is None
+        assert player["derived_scores"]["opportunity"] is not None
+        assert player["derived_scores"]["development"] is not None
+        assert player["derived_scores"]["availability"] is not None
+        assert player["derived_scores"]["confidence"] is not None
+        assert player["derived_scores"]["value_proxy"] is None
+        assert player["derived_scores"]["methodology_version"] == "jleague-official-2025.3"
+
+
+def test_methodology_exposes_profiles_thresholds_and_limitations() -> None:
+    with client() as api:
+        methodology = api.get("/api/v1/methodology").json()
+        assert methodology["version"] == "jleague-official-2025.3"
+        assert set(methodology["role_profiles"]) == {"GK", "DF", "MF", "FW"}
+        assert methodology["eligibility"]["default_minimum_minutes"] == 900
+        assert methodology["missing_data"]["minimum_profile_weight"] == 60
 
 
 def test_compare_requires_two_players() -> None:

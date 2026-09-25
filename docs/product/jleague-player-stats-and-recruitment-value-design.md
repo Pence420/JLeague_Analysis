@@ -114,7 +114,7 @@ Each position uses official metrics that match its responsibilities. Weights app
 - 15% chances created per 90
 - 10% shots on target rate
 - 10% dribble success
-- 5% duel-win rate
+- 5% duels won per 90
 
 ### Midfielders
 
@@ -123,13 +123,13 @@ Each position uses official metrics that match its responsibilities. Weights app
 - 15% opposition-half pass completion
 - 15% through passes per 90
 - 10% dribble success
-- 10% duel-win rate
+- 10% duels won per 90
 - 10% interceptions per 90
 - 5% goals minus xG
 
 ### Defenders
 
-- 20% duel-win rate
+- 20% duels won per 90
 - 20% aerial-duel win rate
 - 15% interceptions per 90
 - 15% tackles per 90
@@ -141,7 +141,7 @@ Each position uses official metrics that match its responsibilities. Weights app
 
 - 35% save rate
 - 20% penalty-area shot save rate
-- 15% shots faced adjusted saves
+- 15% saves per 90
 - 10% cross claim rate
 - 10% clean-sheet rate
 - 10% distribution completion

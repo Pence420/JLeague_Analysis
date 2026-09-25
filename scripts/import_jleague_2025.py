@@ -73,6 +73,49 @@ KNOWN_IDENTITIES = {
 }
 
 
+def load_metric_catalog(path: Path) -> dict:
+    catalog = json.loads(path.read_text(encoding="utf-8"))
+    if "usageStatus" not in catalog:
+        raise ValueError(f"Metric catalog has no usageStatus: {path}")
+    return catalog
+
+
+def require_official_stats_approval(path: Path) -> dict:
+    """Fail closed before any official advanced-stat page is requested."""
+
+    catalog = load_metric_catalog(path)
+    if catalog["usageStatus"] != "approved":
+        raise PermissionError(
+            "Official advanced statistics cannot be imported while catalog "
+            f"usageStatus is {catalog['usageStatus']!r}"
+        )
+    return catalog
+
+
+def write_import_audit(
+    path: Path,
+    *,
+    include_official_stats: bool,
+    usage_status: str,
+    metric_results: list[dict],
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "createdAt": datetime.now().astimezone().isoformat(timespec="seconds"),
+                "officialStatsAction": "requested" if include_official_stats else "skipped",
+                "usageStatus": usage_status,
+                "metricResults": metric_results,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def clean(value: str) -> str:
     value = re.sub(r"<[^>]+>", "", value)
     return " ".join(html.unescape(value).replace("\u3000", " ").split())
@@ -345,11 +388,33 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cache-dir", type=Path, default=Path("/private/tmp/jleague-2025"))
     parser.add_argument("--output", type=Path, default=Path("data/jleague/2025.json"))
+    parser.add_argument(
+        "--metric-catalog",
+        type=Path,
+        default=Path("data/jleague/metric-catalog.json"),
+    )
+    parser.add_argument(
+        "--audit-output",
+        type=Path,
+        default=Path("/private/tmp/jleague-2025-import-audit.json"),
+    )
+    parser.add_argument("--include-official-stats", action="store_true")
     args = parser.parse_args()
+
+    catalog = load_metric_catalog(args.metric_catalog)
+    if args.include_official_stats:
+        require_official_stats_approval(args.metric_catalog)
+
     snapshot = build_snapshot(args.cache_dir)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    write_import_audit(
+        args.audit_output,
+        include_official_stats=args.include_official_stats,
+        usage_status=catalog["usageStatus"],
+        metric_results=[],
     )
     print(
         f"Wrote {len(snapshot['teams'])} clubs and {len(snapshot['players'])} players "

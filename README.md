@@ -1,8 +1,8 @@
 # J-Scout
 
-J-Scout adalah dashboard recruitment intelligence J1 dengan frontend Next.js dan backend FastAPI. Produk ini menyatukan overview liga, profil tim, player explorer, transparent Moneyball ranking, comparison, methodology, dan visualisasi final table 3D.
+J-Scout adalah produk recruitment intelligence J1 dengan frontend Next.js, backend FastAPI, database relasional, dan pipeline data yang dapat diaudit. Produk ini menyatukan overview liga, profil tim, player explorer, Recruitment Value Proxy, comparison, methodology, dan visualisasi performa klub 2D.
 
-> Snapshot berisi 20 klub dan 772 catatan pemain-klub asli J1 2025 dari J.LEAGUE Data Site. Skor J-Scout adalah turunan transparan, bukan prediksi, valuasi, atau pengganti scouting profesional.
+> Snapshot berisi 20 klub dan 772 catatan player-club-season asli J1 2025 dari J.LEAGUE Data Site. Identitas pemain, penampilan, menit, dan gol adalah fakta resmi. Advanced J STATS masih berstatus `research_only`, sehingga Recruitment Value Proxy sengaja menampilkan `not_scored` sampai izin penggunaan tercatat. Skor J-Scout bukan prediksi, valuasi transfer, atau pengganti scouting profesional.
 
 ## Menjalankan full stack
 
@@ -53,7 +53,9 @@ components/                       App shell, dashboard modules, charts
 features/api/                     Adapter kontrak FastAPI → domain frontend
 features/league-intelligence/     Types, Zod validation, analytics, snapshot adapter
 data/jleague/2025.json            Immutable official-data snapshot
+data/jleague/metric-catalog.json  Kontrak 23 advanced metric dan usage gate
 scripts/import_jleague_2025.py    Repeatable official-source importer
+scripts/jleague_stats.py          Parser offline + identity join yang fail-closed
 apps/api/app/                     FastAPI, SQLAlchemy models, seed, endpoints
 apps/api/alembic/                 PostgreSQL migrations
 apps/api/tests/                   Backend contract and scoring tests
@@ -68,7 +70,8 @@ e2e/                              Browser, responsive, interaction, accessibilit
 - `GET /api/v1/teams`
 - `GET /api/v1/players`
 - `GET /api/v1/players/compare?ids=1,2`
-- `POST /api/v1/moneyball/rank`
+- `POST /api/v1/recruitment/rank`
+- `POST /api/v1/moneyball/rank` — compatibility satu rilis, mengirim header deprecation
 - `GET /api/v1/methodology`
 - `GET /api/v1/data-coverage`
 
@@ -81,5 +84,8 @@ Mulai dari [01 app shell](docs/learning/01-app-shell-and-island-navigation.md), 
 - [09 — PostgreSQL dan migration](docs/learning/09-postgresql-and-migrations.md)
 - [10 — Frontend API adapter](docs/learning/10-frontend-api-adapter.md)
 - [11 — Import data resmi J1 2025](docs/learning/11-official-jleague-data-import.md)
+- [12 — Layout dashboard dan information density](docs/learning/12-dashboard-layout-and-information-density.md)
+- [13 — Pipeline official player stats](docs/learning/13-official-player-stats-pipeline.md)
+- [14 — Recruitment Value Proxy](docs/learning/14-recruitment-value-proxy.md)
 
-Referensi visual redesign tersedia di `docs/design/redesign/`. Identitas dan hasil pertandingan memakai snapshot resmi; bentuk visual tetap merupakan desain J-Scout sendiri.
+Referensi visual redesign tersedia di `docs/design/redesign/`. Keputusan sumber ada di `docs/product/jleague-player-statistics-source-register.md`; metadata metric boleh dipelajari sekarang, sedangkan bulk advanced values belum dipublish.

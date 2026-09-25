@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -51,6 +51,8 @@ class PlayerOut(ApiModel):
     opportunity: int | None
     availability: int | None
     coverage: int
+    official_metrics: dict[str, "OfficialMetricOut"] = Field(default_factory=dict)
+    derived_scores: "DerivedScoresOut"
 
 
 class PlayerPage(ApiModel):
@@ -70,31 +72,70 @@ class OverviewOut(ApiModel):
     average_player_coverage: float
 
 
-class MoneyballWeights(BaseModel):
-    performance: int = Field(ge=0, le=100)
-    potential: int = Field(ge=0, le=100)
+class RecruitmentWeights(BaseModel):
+    role_performance: int = Field(ge=0, le=100)
     opportunity: int = Field(ge=0, le=100)
+    development: int = Field(ge=0, le=100)
     availability: int = Field(ge=0, le=100)
+    confidence: int = Field(ge=0, le=100)
 
     @model_validator(mode="after")
     def weights_total_one_hundred(self):
-        if self.performance + self.potential + self.opportunity + self.availability != 100:
+        if (
+            self.role_performance + self.opportunity + self.development
+            + self.availability + self.confidence
+        ) != 100:
             raise ValueError("weights must total 100")
         return self
 
 
-class MoneyballRequest(BaseModel):
-    weights: MoneyballWeights = MoneyballWeights(performance=45, potential=25, opportunity=20, availability=10)
+class RecruitmentRequest(BaseModel):
+    weights: RecruitmentWeights = RecruitmentWeights(
+        role_performance=50,
+        opportunity=20,
+        development=15,
+        availability=10,
+        confidence=5,
+    )
     minimum_minutes: int = Field(default=900, ge=0, le=10000)
-    minimum_coverage: int = Field(default=60, ge=0, le=100)
     position: str | None = None
     limit: int = Field(default=20, ge=1, le=100)
 
 
 class RankedPlayer(BaseModel):
     player: PlayerOut
-    score: int
+    score: float
     components: dict[str, float]
+    methodology_version: str
+
+
+class OfficialMetricOut(ApiModel):
+    value: float | None
+    unit: str
+    per90: float | None
+    listing_status: str
+    source_rank: int | None
+    source_url: str
+    retrieved_at: datetime
+
+
+class DerivedScoresOut(BaseModel):
+    status: str
+    role_performance: float | None
+    opportunity: float | None
+    development: float | None
+    availability: float | None
+    confidence: float | None
+    value_proxy: float | None
+    methodology_version: str
+    metrics_used: list[str]
+    metrics_unavailable: list[str]
+    reasons: list[str]
+    limitations: list[str]
+
+
+# One-release import compatibility for callers that still use the old name.
+MoneyballRequest = RecruitmentRequest
 
 
 class DataSourceOut(ApiModel):
@@ -102,3 +143,6 @@ class DataSourceOut(ApiModel):
     status: str
     coverage: int
     notes: str
+
+
+PlayerOut.model_rebuild()

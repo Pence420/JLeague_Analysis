@@ -6,13 +6,36 @@ export function RecruitmentSignals({ items }: { items: RecruitmentSignal[] }) {
     <section className="surface-card p-5">
       <div className="flex items-end justify-between">
         <div>
-          <p className="eyebrow">High involvement, transparent inputs</p>
-          <h2 className="module-title">Player Signals</h2>
+          <p className="eyebrow">Position-aware recruitment model</p>
+          <h2 className="module-title">Recruitment Value Proxy</h2>
         </div>
         <span className="text-xs text-[var(--ink-muted)]">
-          J-Scout derived score
+          Methodology 2025.3
         </span>
       </div>
+      {items.length === 0 && (
+        <div className="mt-5 grid gap-5 border-t border-[var(--line)] pt-5 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <h3 className="font-semibold">Partial screening available</h3>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--ink-muted)]">
+              Player identity, appearances, minutes and goals are available. The
+              base records now support opportunity, age development,
+              availability and confidence. Advanced J STATS inputs stay gated,
+              so role performance and the final proxy are not fabricated.
+            </p>
+            <p className="mt-3 text-xs text-[var(--ink-muted)]">
+              The proxy is a discovery aid, not a transfer valuation or scouting
+              verdict.
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+            <dt className="text-[var(--ink-muted)]">Data confidence</dt>
+            <dd className="text-right font-semibold">Base data only</dd>
+            <dt className="text-[var(--ink-muted)]">Score status</dt>
+            <dd className="text-right font-semibold">Not scored</dd>
+          </dl>
+        </div>
+      )}
       <div className="mt-5 divide-y divide-[var(--line)]">
         {items.slice(0, 4).map((item) => (
           <article

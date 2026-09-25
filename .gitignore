@@ -4,10 +4,13 @@ out/
 coverage/
 playwright-report/
 test-results/
-.env
-.env.local
+.env*
+!.env.example
 .DS_Store
 npm-debug.log*
 *.tsbuildinfo
 .venv/
 *.db
+__pycache__/
+*.py[cod]
+.pytest_cache/

@@ -5,7 +5,7 @@ const routes = [
   ["/", "League overview"],
   ["/teams", "Teams"],
   ["/players", "Player explorer"],
-  ["/moneyball", "Moneyball shortlist"],
+  ["/moneyball", "Recruitment Value Proxy"],
   ["/compare", "Player comparison"],
   ["/methodology", "Methodology"],
 ] as const;
@@ -42,7 +42,7 @@ test("league overview keeps evidence and league distribution visible", async ({
   await expect(page.getByText(/derived scores are labeled/i)).toBeVisible();
 });
 
-test("core player and moneyball interactions work", async ({ page }) => {
+test("core player and recruitment interactions work", async ({ page }) => {
   await page.goto("/players");
   await page.getByLabel("Search players").fill("Hayakawa");
   await expect(
@@ -53,18 +53,75 @@ test("core player and moneyball interactions work", async ({ page }) => {
 
   await page.goto("/moneyball");
   await page.getByRole("button", { name: "Development" }).click();
-  await expect(page.getByText("Moneyball score")).toBeVisible();
+  await expect(page.getByText("Recruitment Value Proxy").first()).toBeVisible();
+  await page.getByLabel("Recruitment position").selectOption("GK");
+  await expect(
+    page.getByRole("cell", { name: "GK", exact: true }).first(),
+  ).toBeVisible();
+  await page.getByLabel("Minimum minutes").selectOption("450");
+  await expect(
+    page.getByText(/discovery mode includes smaller samples/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/partial screening available/i).first(),
+  ).toBeVisible();
+  await expect(page.getByText(/base-data components available/i)).toBeVisible();
+  await expect(
+    page.getByRole("columnheader", { name: "Availability" }),
+  ).toBeVisible();
+  await expect(page.getByText("Base-data profile")).toBeVisible();
+  await expect(
+    page
+      .getByRole("row")
+      .nth(1)
+      .getByText(/\d+(\.\d+)?/)
+      .first(),
+  ).toBeVisible();
+});
+
+test("comparison blocks cross-position score claims", async ({ page }) => {
+  await page.goto("/compare");
+  const playerA = page.getByLabel("Player A");
+  const playerB = page.getByLabel("Player B");
+  const goalkeeper = await playerA
+    .locator("option")
+    .filter({ hasText: "HAYAKAWA Tomoki" })
+    .getAttribute("value");
+  const forward = await playerB
+    .locator("option")
+    .filter({ hasText: "LEO CEARA" })
+    .getAttribute("value");
+  await playerA.selectOption(goalkeeper!);
+  await playerB.selectOption(forward!);
+  await expect(
+    page.getByText(/cross-position score comparison is disabled/i),
+  ).toBeVisible();
 });
 
 test("all routes avoid viewport overflow", async ({ page }) => {
   for (const [route] of routes) {
     await page.goto(route);
-    const overflow = await page.evaluate(
-      () =>
-        document.documentElement.scrollWidth >
-        document.documentElement.clientWidth,
-    );
-    expect(overflow, `${route} should not overflow horizontally`).toBe(false);
+    const overflow = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      offenders: [...document.querySelectorAll("body *")]
+        .filter(
+          (element) =>
+            element.getBoundingClientRect().right >
+            document.documentElement.clientWidth + 0.5,
+        )
+        .slice(0, 5)
+        .map((element) => ({
+          className: element.className,
+          tag: element.tagName,
+          text: element.textContent?.trim().slice(0, 80),
+          right: element.getBoundingClientRect().right,
+        })),
+    }));
+    expect(
+      overflow.scrollWidth,
+      `${route} overflowed: ${JSON.stringify(overflow.offenders)}`,
+    ).toBe(overflow.clientWidth);
   }
 });
 
@@ -90,6 +147,14 @@ test("captures the redesigned dashboard for visual review", async ({
   await page.waitForTimeout(800);
   await page.screenshot({
     path: testInfo.outputPath("j-scout-dashboard.png"),
+    fullPage: true,
+  });
+  await page.goto("/moneyball");
+  await expect(
+    page.getByRole("heading", { name: "Recruitment Value Proxy" }).first(),
+  ).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath("recruitment-value-proxy.png"),
     fullPage: true,
   });
 });

@@ -1,6 +1,63 @@
 export type Confidence = "low" | "medium" | "high";
 export type MetricKey = "points" | "goalsFor" | "goalDifference";
 export type PlayerPosition = "GK" | "DF" | "MF" | "FW";
+export type PlayerMetricKey =
+  | "non_penalty_xg"
+  | "goals"
+  | "assists"
+  | "chances_created"
+  | "shots_on_target_rate"
+  | "dribble_success"
+  | "duels_won_per90"
+  | "opposition_half_pass_completion"
+  | "through_passes"
+  | "interceptions"
+  | "goals_minus_xg"
+  | "aerial_duel_win_rate"
+  | "tackles"
+  | "tackle_success"
+  | "clearances"
+  | "blocks"
+  | "pass_completion"
+  | "save_rate"
+  | "penalty_area_save_rate"
+  | "saves_per90"
+  | "cross_claim_rate"
+  | "clean_sheet_rate"
+  | "distribution_completion";
+
+export interface OfficialMetric {
+  value: number | null;
+  unit: string;
+  per90: number | null;
+  listingStatus: "listed" | "not_listed" | "unavailable";
+  sourceRank: number | null;
+  sourceUrl: string;
+  retrievedAt: string;
+}
+
+export interface DerivedScores {
+  status: "scored" | "ineligible" | "not_scored";
+  rolePerformance: number | null;
+  opportunity: number | null;
+  development: number | null;
+  availability: number | null;
+  confidence: number | null;
+  valueProxy: number | null;
+  methodologyVersion: string;
+  metricsUsed: PlayerMetricKey[];
+  metricsUnavailable: PlayerMetricKey[];
+  reasons: string[];
+  limitations: string[];
+}
+
+export interface ComponentWeights {
+  rolePerformance: number;
+  opportunity: number;
+  development: number;
+  availability: number;
+  confidence: number;
+}
 
 export interface TeamSeason {
   id: string;
@@ -38,11 +95,9 @@ export interface PlayerSeason {
   birthDate: string;
   heightCm: number | null;
   weightKg: number | null;
-  performance: number | null;
-  potential: number | null;
-  opportunity: number | null;
-  availability: number | null;
   coverage: number;
+  officialMetrics: Partial<Record<PlayerMetricKey, OfficialMetric>>;
+  derivedScores: DerivedScores;
 }
 
 export interface LeagueDataset {

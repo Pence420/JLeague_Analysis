@@ -10,6 +10,8 @@ import type {
   RoleSupply,
   TeamLandscapePoint,
   TeamSeason,
+  ComponentWeights,
+  DerivedScores,
 } from "./types";
 
 export const DEFAULT_AXES = ["points", "goalsFor", "goalDifference"] as const;
@@ -32,6 +34,25 @@ export function confidenceFromCoverage(coverage: number): Confidence {
   if (coverage >= 90) return "high";
   if (coverage >= 80) return "medium";
   return "low";
+}
+
+export function weightedValueProxy(
+  scores: DerivedScores,
+  weights: ComponentWeights,
+): number | null {
+  if (scores.status !== "scored") return null;
+  const components = {
+    rolePerformance: scores.rolePerformance,
+    opportunity: scores.opportunity,
+    development: scores.development,
+    availability: scores.availability,
+    confidence: scores.confidence,
+  };
+  if (Object.values(components).some((value) => value === null)) return null;
+  return (Object.keys(components) as Array<keyof ComponentWeights>).reduce(
+    (sum, key) => sum + ((components[key] as number) * weights[key]) / 100,
+    0,
+  );
 }
 
 function teamMetric(team: TeamSeason, key: MetricKey): number {
@@ -101,7 +122,9 @@ export function buildTeamLandscape(
   });
 }
 
-export function buildPerformanceProcess(dataset: LeagueDataset): EvidenceItem[] {
+export function buildPerformanceProcess(
+  dataset: LeagueDataset,
+): EvidenceItem[] {
   return [...dataset.teams]
     .sort(
       (a, b) =>
@@ -123,13 +146,16 @@ export function buildPerformanceProcess(dataset: LeagueDataset): EvidenceItem[] 
         ],
         confidence: "high" as const,
         coverage: team.coverage,
-        limitation: "No event-level xG or opponent-strength adjustment is included.",
+        limitation:
+          "No event-level xG or opponent-strength adjustment is included.",
         tone: "positive" as const,
       };
     });
 }
 
-export function buildSustainabilityWatch(dataset: LeagueDataset): EvidenceItem[] {
+export function buildSustainabilityWatch(
+  dataset: LeagueDataset,
+): EvidenceItem[] {
   return [...dataset.teams]
     .sort((a, b) => a.goalsAgainst - b.goalsAgainst || a.rank - b.rank)
     .slice(0, 3)
@@ -141,26 +167,17 @@ export function buildSustainabilityWatch(dataset: LeagueDataset): EvidenceItem[]
         "Low goals conceded is a durable season outcome, though it cannot separate goalkeeper, defending and opponent finishing effects.",
       evidence: [
         { label: "Conceded", value: String(team.goalsAgainst) },
-        { label: "Per match", value: (team.goalsAgainst / team.played).toFixed(2) },
+        {
+          label: "Per match",
+          value: (team.goalsAgainst / team.played).toFixed(2),
+        },
       ],
       confidence: "high" as const,
       coverage: team.coverage,
-      limitation: "Chance quality and shot locations are unavailable in this snapshot.",
+      limitation:
+        "Chance quality and shot locations are unavailable in this snapshot.",
       tone: "neutral" as const,
     }));
-}
-
-function weightedScore(values: Array<[number | null, number]>): number | null {
-  const available = values.filter(
-    (item): item is [number, number] => item[0] !== null,
-  );
-  const weight = available.reduce((sum, item) => sum + item[1], 0);
-  return weight === 0
-    ? null
-    : available.reduce(
-        (sum, [value, itemWeight]) => sum + value * itemWeight,
-        0,
-      ) / weight;
 }
 
 export function buildRecruitmentSignals(
@@ -171,16 +188,11 @@ export function buildRecruitmentSignals(
   return dataset.players
     .filter(
       (player) =>
-        player.minutes >= options.minimumMinutes && player.coverage >= 60,
+        player.minutes >= options.minimumMinutes &&
+        player.derivedScores.status === "scored",
     )
     .map((player) => {
-      const score =
-        weightedScore([
-          [player.performance, 0.45],
-          [player.potential, 0.25],
-          [player.opportunity, 0.2],
-          [player.availability, 0.1],
-        ]) ?? 0;
+      const score = player.derivedScores.valueProxy ?? 0;
       return {
         playerId: player.id,
         playerName: player.name,
@@ -194,15 +206,18 @@ export function buildRecruitmentSignals(
           `${player.appearances} league appearances`,
           `${player.goals} goals in ${player.minutes.toLocaleString("en-US")} minutes`,
         ],
-        risk:
-          "J-Scout score is derived from appearances, minutes, goals and age—not a scouting verdict.",
-        coverage: player.coverage,
-        confidence: confidenceFromCoverage(player.coverage),
+        risk: "J-Scout score is derived from appearances, minutes, goals and age—not a scouting verdict.",
+        coverage: player.derivedScores.confidence ?? 0,
+        confidence: confidenceFromCoverage(
+          player.derivedScores.confidence ?? 0,
+        ),
       };
     })
     .sort(
       (a, b) =>
-        b.score - a.score || b.minutes - a.minutes || a.playerId.localeCompare(b.playerId),
+        b.score - a.score ||
+        b.minutes - a.minutes ||
+        a.playerId.localeCompare(b.playerId),
     )
     .slice(0, 8);
 }
@@ -229,7 +244,9 @@ export function buildRoleSupply(dataset: LeagueDataset): RoleSupply[] {
 }
 
 export function buildAnalystBrief(dataset: LeagueDataset): AnalystFinding[] {
-  const [champion, runnerUp] = [...dataset.teams].sort((a, b) => a.rank - b.rank);
+  const [champion, runnerUp] = [...dataset.teams].sort(
+    (a, b) => a.rank - b.rank,
+  );
   const bestAttack = [...dataset.teams].sort(
     (a, b) => b.goalsFor - a.goalsFor || a.rank - b.rank,
   )[0];
@@ -249,7 +266,8 @@ export function buildAnalystBrief(dataset: LeagueDataset): AnalystFinding[] {
       ],
       confidence: "high",
       coverage: 100,
-      limitation: "Final-table evidence describes the outcome, not causal match dynamics.",
+      limitation:
+        "Final-table evidence describes the outcome, not causal match dynamics.",
       tone: "positive",
     },
     {
@@ -275,7 +293,10 @@ export function buildAnalystBrief(dataset: LeagueDataset): AnalystFinding[] {
         "The defensive record is strong outcome evidence, but should not be assigned to individuals without event and video context.",
       evidence: [
         { label: "Conceded", value: String(bestDefence.goalsAgainst) },
-        { label: "Goal difference", value: String(bestDefence.goalsFor - bestDefence.goalsAgainst) },
+        {
+          label: "Goal difference",
+          value: String(bestDefence.goalsFor - bestDefence.goalsAgainst),
+        },
       ],
       confidence: "high",
       coverage: 100,

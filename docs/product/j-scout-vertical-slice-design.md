@@ -1,7 +1,7 @@
 # J-Scout League Intelligence Vertical Slice — Design Specification
 
 **Date:** 2026-09-22  
-**Status:** Awaiting user review  
+**Status:** Historical approved design  
 **Scope:** Frontend-first vertical slice for the J-Scout home/league intelligence experience
 
 ## 1. Intent

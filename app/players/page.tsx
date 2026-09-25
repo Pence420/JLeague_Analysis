@@ -3,9 +3,12 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PageFrame } from "@/components/app-shell/page-frame";
-import { ScoreBar } from "@/components/ui/score-bar";
 import { useLeagueDataset } from "@/features/api/use-league-dataset";
-import { buildRecruitmentSignals } from "@/features/league-intelligence/analytics";
+import {
+  METRIC_LABELS,
+  POSITION_EVIDENCE,
+  formatOfficialMetric,
+} from "@/features/league-intelligence/metric-labels";
 
 export default function PlayersPage() {
   const { dataset } = useLeagueDataset();
@@ -13,19 +16,21 @@ export default function PlayersPage() {
   const [position, setPosition] = useState("All");
   const [shortlist, setShortlist] = useState<string[]>([]);
   const players = useMemo(() => {
-    const recruitmentSignals = buildRecruitmentSignals(dataset, {
-      minimumMinutes: 450,
-    });
-    const scoreMap = new Map(
-      recruitmentSignals.map((item) => [item.playerId, item.score]),
-    );
     return dataset.players
       .filter(
         (player) =>
           (position === "All" || player.position === position) &&
-          `${player.name} ${player.nameJa}`.toLowerCase().includes(query.toLowerCase()),
+          `${player.name} ${player.nameJa}`
+            .toLowerCase()
+            .includes(query.toLowerCase()),
       )
-      .sort((a, b) => (scoreMap.get(b.id) ?? 0) - (scoreMap.get(a.id) ?? 0));
+      .sort(
+        (a, b) =>
+          (b.derivedScores.valueProxy ?? -1) -
+            (a.derivedScores.valueProxy ?? -1) ||
+          b.minutes - a.minutes ||
+          a.id.localeCompare(b.id),
+      );
   }, [dataset, query, position]);
   const toggle = (id: string) =>
     setShortlist((items) =>
@@ -38,7 +43,7 @@ export default function PlayersPage() {
   return (
     <PageFrame
       title="Player explorer"
-      description="Filter position-aware performance and build a comparison shortlist."
+      description="Browse official 2025 records, position evidence and transparent score availability."
     >
       <div className="mb-3 flex flex-wrap gap-2">
         <input
@@ -80,8 +85,8 @@ export default function PlayersPage() {
                 <th>Apps</th>
                 <th>Minutes</th>
                 <th>Goals</th>
-                <th>J-Scout involvement</th>
-                <th>Coverage</th>
+                <th>Official role evidence</th>
+                <th>Recruitment proxy</th>
               </tr>
             </thead>
             <tbody>
@@ -110,10 +115,42 @@ export default function PlayersPage() {
                   <td>{player.appearances}</td>
                   <td>{player.minutes.toLocaleString("en-US")}</td>
                   <td>{player.goals}</td>
-                  <td>
-                    <ScoreBar value={player.performance} accent />
+                  <td className="py-3">
+                    <div className="space-y-1">
+                      {POSITION_EVIDENCE[player.position]
+                        .slice(0, 2)
+                        .map((key) => {
+                          const metric = player.officialMetrics[key];
+                          return (
+                            <span key={key} className="block text-xs">
+                              <span className="text-[var(--ink-muted)]">
+                                {METRIC_LABELS[key]}:
+                              </span>{" "}
+                              <strong>
+                                {metric
+                                  ? formatOfficialMetric(
+                                      metric.per90 ?? metric.value,
+                                      metric.per90 !== null
+                                        ? "per90"
+                                        : metric.unit,
+                                    )
+                                  : "Not available"}
+                              </strong>
+                            </span>
+                          );
+                        })}
+                    </div>
                   </td>
-                  <td>{player.coverage}%</td>
+                  <td>
+                    <strong className="block tabular-nums">
+                      {player.derivedScores.valueProxy?.toFixed(1) ?? "—"}
+                    </strong>
+                    <span className="text-xs text-[var(--ink-muted)]">
+                      {player.derivedScores.status === "scored"
+                        ? `${player.derivedScores.confidence}% confidence`
+                        : "Not scored"}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -2,7 +2,7 @@
   "competition": "J1",
   "season": 2025,
   "snapshotDate": "2025-12-06",
-  "methodologyVersion": "jleague-official-2025.1",
+  "methodologyVersion": "jleague-official-2025.3",
   "sample": false,
   "provenance": {
     "publisher": "J.LEAGUE",
@@ -13,7 +13,7 @@
     "appearanceRecordPattern": "https://data.j-league.or.jp/SFPR01/search",
     "notes": [
       "Club standings and player appearance totals are official published records.",
-      "Performance, potential, opportunity and availability are J-Scout derived scores.",
+      "Legacy score fields remain only for migration compatibility; canonical Recruitment Value Proxy outputs require approved advanced metrics.",
       "The snapshot is fixed to the final 2025 matchday and is not live data."
     ],
     "unmatchedIdentities": []

@@ -1,6 +1,6 @@
 # J-Scout League Intelligence Vertical Slice Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Historical implementation plan for the first frontend slice. The current official-data architecture and 2D visualization are documented in the newer product and engineering documents.
 
 **Goal:** Build a responsive, analytically credible J-Scout League Intelligence page with an island navbar, deterministic sample-data insights, and an accessible interactive 3D team-style landscape.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js, React, TypeScript, Tailwind CSS, React Three Fiber, Three.js, Zod, Vitest, Testing Library, Playwright, axe-core.
 
-**Spec:** `docs/superpowers/specs/2026-09-22-j-scout-vertical-slice-design.md`
+**Spec:** `docs/product/j-scout-vertical-slice-design.md`
 
 ## Global Constraints
 
